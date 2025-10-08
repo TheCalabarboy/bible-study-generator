@@ -35,6 +35,9 @@ const logout = async () => {};
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   
+  const [videoTitle, setVideoTitle] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
+
   // AI generation states
   const [isGenerating, setIsGenerating] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -87,13 +90,12 @@ const logout = async () => {};
     }
   };
 
-  const generateStudy = async () => {
+const generateStudy = async () => {
   setIsGenerating(true);
   setValidationError('');
   
   try {
     console.log('Step 1: Validating URL...');
-    // Step 1: Validate YouTube URL
     if (!validateYouTubeUrl(youtubeLink)) {
       setValidationError('Please provide a valid YouTube URL.');
       setIsGenerating(false);
@@ -101,43 +103,44 @@ const logout = async () => {};
     }
     
     console.log('Step 2: Getting video info...');
-// Step 2: Extract video ID and get video info
-const videoId = extractVideoId(youtubeLink);
-const videoInfo = await getVideoInfo(videoId);
-console.log('Video info:', videoInfo);
-
-// Check duration (max 180 minutes)
-// if (videoInfo.duration > 180) {
-//  setValidationError(
-//   'This video appears to be quite long. Please provide a YouTube link that begins at the sermon\'s actual start time.'
-//  );
-//  setIsGenerating(false);
-//  return;
-// }
-
-// Also warn if duration couldn't be determined
-if (videoInfo.duration === 0) {
-  console.warn('Could not determine video duration');
-}
+    const videoId = extractVideoId(youtubeLink);
+    let videoInfo;
     
-// In generateStudy function, after getting videoInfo
-console.log('Step 3: Analyzing content...');
-
-// Fetch additional video details
-const videoPageResponse = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-const videoPageHtml = await videoPageResponse.text();
-
-// Extract description (approximate - may need refinement)
-const descMatch = videoPageHtml.match(/"description":\{"simpleText":"([^"]+)"/);
-const description = descMatch ? descMatch[1] : videoInfo.author;
-
-const analysis = await analyzeVideoForBiblicalContent(
-  videoInfo.title,
-  `Author: ${videoInfo.author}\nDescription: ${description}`
-);
+    try {
+      videoInfo = await getVideoInfo(videoId);
+    } catch (error) {
+      console.log('Could not fetch video metadata, using manual input or defaults');
+      videoInfo = {
+        title: videoTitle || `YouTube Sermon (${videoId})`,
+        author: 'Christian Teacher',
+        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        duration: 0
+      };
+    }
+    
+    // If user provided manual title, use it
+    if (videoTitle) {
+      videoInfo.title = videoTitle;
+    }
+    
+    console.log('Video info:', videoInfo);
+    
+    console.log('Step 3: Analyzing content...');
+    const analysis = await analyzeVideoForBiblicalContent(
+      videoInfo.title,
+      `Author: ${videoInfo.author}`
+    );
+    console.log('Analysis result:', analysis);
+    
+    if (!analysis.isChristianTeaching || analysis.confidence < 0.6) {
+      setValidationError(
+        'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
+      );
+      setIsGenerating(false);
+      return;
+    }
     
     console.log('Step 4: Generating study...');
-    // Step 4: Generate the 5-day study
     const generatedStudies = await generateBibleStudy(
       videoInfo.title,
       `Themes: ${analysis.mainThemes.join(', ')}`,
@@ -147,12 +150,10 @@ const analysis = await analyzeVideoForBiblicalContent(
     );
     console.log('Generated studies:', generatedStudies);
     
-    // Validate that we got 5 studies
     if (!generatedStudies || generatedStudies.length === 0) {
       throw new Error('No studies were generated');
     }
     
-    // Update the dailyStudies with AI-generated content
     const studiesWithDates = generatedStudies.map((study, index) => ({
       day: study.day || (index + 1),
       title: study.title || `Day ${index + 1}`,
@@ -245,6 +246,7 @@ const formatStudyContent = (content) => {
     // Line breaks
     .replace(/\n/g, '<br/>');
 };
+
 
   // LOGIN SCREEN
   if (step === 'login' && !currentUser) {
@@ -418,6 +420,7 @@ if (step === 'input') {
             fontSize: '24px',
             marginBottom: '16px' 
           }}>
+  
             🎥 YouTube Link
           </label>
           <p style={{ color: '#666', marginBottom: '16px' }}>
@@ -439,7 +442,58 @@ if (step === 'input') {
               outline: 'none',
             }}
           />
+<input 
+  type="text"
+  value={youtubeLink}
+  onChange={(e) => setYoutubeLink(e.target.value)}
+  placeholder="https://www.youtube.com/watch?v=..."
+  style={{
+    width: '100%',
+    padding: '16px',
+    fontSize: '16px',
+    border: '2px solid #e0e0e0',
+    borderRadius: '12px',
+    marginTop: '12px',
+    outline: 'none',
+  }}
+/>
 
+{/* Optional Video Title Input */}
+<div style={{ marginTop: '16px' }}>
+  <button
+    type="button"
+    onClick={() => setShowManualInput(!showManualInput)}
+    style={{
+      background: 'none',
+      border: 'none',
+      color: '#667eea',
+      fontSize: '14px',
+      cursor: 'pointer',
+      textDecoration: 'underline'
+    }}
+  >
+    {showManualInput ? '− Hide manual input' : '+ Can\'t auto-detect video? Enter details manually'}
+  </button>
+</div>
+
+{showManualInput && (
+  <div style={{ marginTop: '16px' }}>
+    <input
+      type="text"
+      value={videoTitle}
+      onChange={(e) => setVideoTitle(e.target.value)}
+      placeholder="Enter video title (optional)"
+      style={{
+        width: '100%',
+        padding: '12px',
+        fontSize: '16px',
+        border: '2px solid #e0e0e0',
+        borderRadius: '12px',
+        outline: 'none',
+      }}
+    />
+  </div>
+)}
           {/* Options */}
           <div style={{ marginTop: '32px' }}>
             <label style={{ 
