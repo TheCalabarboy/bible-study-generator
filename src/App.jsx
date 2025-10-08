@@ -19,10 +19,14 @@ const logout = async () => {};
   const [activeDay, setActiveDay] = useState(1);
   
   // Study options
-  const [options, setOptions] = useState({
-    usageSelection: 'Personal Study',
-    startDate: '',
-  });
+ const [options, setOptions] = useState({
+  usageSelection: 'Personal Study',
+  startDate: '',
+  includeDeeperAnalysis: false,
+  sessionLength: '30 min',
+  includeActionSteps: true,
+  includeMemoryVerses: true
+});
   
   // Authentication states
   const [email, setEmail] = useState('');
@@ -97,26 +101,40 @@ const logout = async () => {};
     }
     
     console.log('Step 2: Getting video info...');
-    // Step 2: Extract video ID and get video info
-    const videoId = extractVideoId(youtubeLink);
-    const videoInfo = await getVideoInfo(videoId);
-    console.log('Video info:', videoInfo);
+// Step 2: Extract video ID and get video info
+const videoId = extractVideoId(youtubeLink);
+const videoInfo = await getVideoInfo(videoId);
+console.log('Video info:', videoInfo);
+
+// Check duration (max 180 minutes)
+if (videoInfo.duration > 180) {
+  setValidationError(
+    'This video appears to be quite long. Please provide a YouTube link that begins at the sermon\'s actual start time.'
+  );
+  setIsGenerating(false);
+  return;
+}
+
+// Also warn if duration couldn't be determined
+if (videoInfo.duration === 0) {
+  console.warn('Could not determine video duration');
+}
     
-    console.log('Step 3: Analyzing content...');
-    // Step 3: Analyze if it's biblical content
-    const analysis = await analyzeVideoForBiblicalContent(
-      videoInfo.title,
-      `Author: ${videoInfo.author}`
-    );
-    console.log('Analysis result:', analysis);
-    
-    if (!analysis.isChristianTeaching || analysis.confidence < 0.6) {
-      setValidationError(
-        'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
-      );
-      setIsGenerating(false);
-      return;
-    }
+// In generateStudy function, after getting videoInfo
+console.log('Step 3: Analyzing content...');
+
+// Fetch additional video details
+const videoPageResponse = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+const videoPageHtml = await videoPageResponse.text();
+
+// Extract description (approximate - may need refinement)
+const descMatch = videoPageHtml.match(/"description":\{"simpleText":"([^"]+)"/);
+const description = descMatch ? descMatch[1] : videoInfo.author;
+
+const analysis = await analyzeVideoForBiblicalContent(
+  videoInfo.title,
+  `Author: ${videoInfo.author}\nDescription: ${description}`
+);
     
     console.log('Step 4: Generating study...');
     // Step 4: Generate the 5-day study
@@ -209,6 +227,24 @@ const logout = async () => {};
       boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
     },
   };
+
+const formatStudyContent = (content) => {
+  return content
+    // Headers
+    .replace(/^# (.+)$/gm, '<h1 style="font-size: 28px; font-weight: bold; color: #667eea; margin: 24px 0 12px 0;">$1</h1>')
+    .replace(/^## (.+)$/gm, '<h2 style="font-size: 22px; font-weight: bold; color: #764ba2; margin: 20px 0 10px 0;">$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3 style="font-size: 18px; font-weight: bold; color: #333; margin: 16px 0 8px 0;">$1</h3>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: bold; color: #333;">$1</strong>')
+    // Lists
+    .replace(/^- (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px;">$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px; list-style-type: decimal;">$1</li>')
+    // Paragraphs
+    .replace(/\n\n/g, '</p><p style="margin: 12px 0;">')
+    .replace(/^(?!<[hl]|<li)/gm, '<p style="margin: 12px 0;">')
+    // Line breaks
+    .replace(/\n/g, '<br/>');
+};
 
   // LOGIN SCREEN
   if (step === 'login' && !currentUser) {
@@ -459,6 +495,121 @@ if (step === 'input') {
             />
           </div>
           
+              {/* After the existing options */}
+
+<div style={{ marginTop: '24px' }}>
+  <label style={{ 
+    display: 'block', 
+    color: '#333', 
+    fontWeight: 'bold', 
+    fontSize: '18px',
+    marginBottom: '12px' 
+  }}>
+    ⏱️ Session Length
+  </label>
+  <select
+    value={options.sessionLength}
+    onChange={(e) => setOptions({...options, sessionLength: e.target.value})}
+    style={{
+      width: '100%',
+      padding: '12px',
+      fontSize: '16px',
+      border: '2px solid #e0e0e0',
+      borderRadius: '12px',
+      outline: 'none',
+    }}
+  >
+    <option>15 min</option>
+    <option>30 min</option>
+    <option>45 min</option>
+    <option>1 hour</option>
+  </select>
+</div>
+
+<div style={{ marginTop: '24px' }}>
+  <label style={{ 
+    display: 'flex',
+    alignItems: 'center',
+    color: '#333',
+    fontSize: '16px',
+    cursor: 'pointer'
+  }}>
+    <input
+      type="checkbox"
+      checked={options.includeDeeperAnalysis}
+      onChange={(e) => setOptions({...options, includeDeeperAnalysis: e.target.checked})}
+      style={{
+        width: '20px',
+        height: '20px',
+        marginRight: '10px',
+        cursor: 'pointer'
+      }}
+    />
+    <span>
+      <strong>Include Deeper Analysis</strong>
+      <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
+        Add Greek/Hebrew word studies and historical context
+      </span>
+    </span>
+  </label>
+</div>
+
+<div style={{ marginTop: '16px' }}>
+  <label style={{ 
+    display: 'flex',
+    alignItems: 'center',
+    color: '#333',
+    fontSize: '16px',
+    cursor: 'pointer'
+  }}>
+    <input
+      type="checkbox"
+      checked={options.includeMemoryVerses}
+      onChange={(e) => setOptions({...options, includeMemoryVerses: e.target.checked})}
+      style={{
+        width: '20px',
+        height: '20px',
+        marginRight: '10px',
+        cursor: 'pointer'
+      }}
+    />
+    <span>
+      <strong>Include Memory Verses</strong>
+      <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
+        Add key verses to memorize each day
+      </span>
+    </span>
+  </label>
+</div>
+
+<div style={{ marginTop: '16px' }}>
+  <label style={{ 
+    display: 'flex',
+    alignItems: 'center',
+    color: '#333',
+    fontSize: '16px',
+    cursor: 'pointer'
+  }}>
+    <input
+      type="checkbox"
+      checked={options.includeActionSteps}
+      onChange={(e) => setOptions({...options, includeActionSteps: e.target.checked})}
+      style={{
+        width: '20px',
+        height: '20px',
+        marginRight: '10px',
+        cursor: 'pointer'
+      }}
+    />
+    <span>
+      <strong>Include Action Steps</strong>
+      <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
+        Add practical application for each day
+      </span>
+    </span>
+  </label>
+</div>
+
           {/* REAL AI BUTTON */}
           <button 
             onClick={generateStudy}
@@ -613,26 +764,28 @@ if (!currentStudy) {
             </p>
           </div>
 
-          {/* Study Content */}
-          <div style={{
-            background: 'linear-gradient(135deg, #f3e7ff 0%, #e0f2fe 100%)',
-            padding: '32px',
-            borderRadius: '16px',
-            border: '2px solid #e0d4f7',
-            maxHeight: '500px',
-            overflowY: 'auto',
-            marginBottom: '32px',
-          }}>
-            <pre style={{ 
-              whiteSpace: 'pre-wrap', 
-              color: '#333',
-              fontFamily: 'inherit',
-              lineHeight: '1.8',
-              fontSize: '16px',
-            }}>
-              {currentStudy.content}
-            </pre>
-          </div>
+{/* Study Content */}
+<div style={{
+  background: 'linear-gradient(135deg, #f3e7ff 0%, #e0f2fe 100%)',
+  padding: '32px',
+  borderRadius: '16px',
+  border: '2px solid #e0d4f7',
+  maxHeight: '500px',
+  overflowY: 'auto',
+  marginBottom: '32px',
+}}>
+  <div 
+    style={{ 
+      color: '#333',
+      fontFamily: 'inherit',
+      lineHeight: '1.8',
+      fontSize: '16px',
+    }}
+    dangerouslySetInnerHTML={{
+      __html: formatStudyContent(currentStudy.content)
+    }}
+  />
+</div>
 
           {/* Download Buttons */}
           <div style={{ 

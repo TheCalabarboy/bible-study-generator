@@ -5,22 +5,22 @@ const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 export async function analyzeVideoForBiblicalContent(videoTitle, videoDescription) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-  const prompt = `
-You are a biblical content analyzer. Analyze this YouTube video and determine if it's a Christian biblical teaching, sermon, or preaching.
+// In generateBibleStudy function
+const prompt = `
+You are a Christian pastor and Bible study author. Create a detailed 5-day Bible study guide based on this sermon.
 
 Video Title: ${videoTitle}
-Video Description: ${videoDescription}
+Main Themes: ${themes.join(', ')}
+Scripture References: ${scriptures.join(', ')}
+Study Type: ${options.usageSelection}
+Session Length: ${options.sessionLength}
+Start Date: ${options.startDate || 'Not specified'}
 
-Respond with a JSON object:
-{
-  "isChristianTeaching": true or false,
-  "confidence": 0.0 to 1.0,
-  "reason": "brief explanation",
-  "mainThemes": ["theme1", "theme2"],
-  "scriptureReferences": ["reference1", "reference2"]
-}
+${options.includeDeeperAnalysis ? 'INCLUDE: Greek/Hebrew word studies and historical/cultural context for key terms.' : ''}
+${options.includeMemoryVerses ? 'INCLUDE: One memory verse for each day.' : ''}
+${options.includeActionSteps ? 'INCLUDE: Specific, practical action steps for each day.' : ''}
 
-Be strict - only return true if it's clearly biblical Christian content (sermon, teaching, preaching, Bible study).
+// ... rest of your prompt
 `;
 
   try {
