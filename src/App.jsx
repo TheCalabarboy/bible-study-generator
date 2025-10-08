@@ -107,13 +107,13 @@ const videoInfo = await getVideoInfo(videoId);
 console.log('Video info:', videoInfo);
 
 // Check duration (max 180 minutes)
-if (videoInfo.duration > 180) {
-  setValidationError(
-    'This video appears to be quite long. Please provide a YouTube link that begins at the sermon\'s actual start time.'
-  );
-  setIsGenerating(false);
-  return;
-}
+// if (videoInfo.duration > 180) {
+//  setValidationError(
+//   'This video appears to be quite long. Please provide a YouTube link that begins at the sermon\'s actual start time.'
+//  );
+//  setIsGenerating(false);
+//  return;
+// }
 
 // Also warn if duration couldn't be determined
 if (videoInfo.duration === 0) {
