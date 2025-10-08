@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from './contexts/AuthContext';
+// import { useAuth } from './contexts/AuthContext'; // (unused while auth bypass is active)
 import { exportStudyToPDF } from './utils/exportToPDF';
 import { exportStudyToWord } from './utils/exportToWord';
 import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/geminiService';
@@ -7,11 +7,11 @@ import { extractVideoId, getVideoInfo, validateYouTubeUrl } from './services/you
 
 function App() {
   // Temporarily bypass auth to test AI features
-const currentUser = { email: 'test@example.com' };
-const login = async () => {};
-const signup = async () => {};
-const logout = async () => {};
-// const { currentUser, login, signup, logout } = useAuth();
+  const currentUser = { email: 'test@example.com' };
+  const login = async () => {};
+  const signup = async () => {};
+  const logout = async () => {};
+  // const { currentUser, login, signup, logout } = useAuth();
   
   // Navigation and content states
   const [step, setStep] = useState('input');
@@ -19,14 +19,14 @@ const logout = async () => {};
   const [activeDay, setActiveDay] = useState(1);
   
   // Study options
- const [options, setOptions] = useState({
-  usageSelection: 'Personal Study',
-  startDate: '',
-  includeDeeperAnalysis: false,
-  sessionLength: '30 min',
-  includeActionSteps: true,
-  includeMemoryVerses: true
-});
+  const [options, setOptions] = useState({
+    usageSelection: 'Personal Study',
+    startDate: '',
+    includeDeeperAnalysis: false,
+    sessionLength: '30 min',
+    includeActionSteps: true,
+    includeMemoryVerses: true
+  });
   
   // Authentication states
   const [email, setEmail] = useState('');
@@ -34,9 +34,6 @@ const logout = async () => {};
   const [isSignup, setIsSignup] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
-  
-  const [videoTitle, setVideoTitle] = useState('');
-  const [showManualInput, setShowManualInput] = useState(false);
 
   // AI generation states
   const [isGenerating, setIsGenerating] = useState(false);
@@ -90,117 +87,113 @@ const logout = async () => {};
     }
   };
 
-const generateStudy = async () => {
-  setIsGenerating(true);
-  setValidationError('');
-  
-  try {
-    console.log('Step 1: Validating URL...');
-    if (!validateYouTubeUrl(youtubeLink)) {
-      setValidationError('Please provide a valid YouTube URL.');
-      setIsGenerating(false);
-      return;
-    }
-    
-    console.log('Step 2: Getting video info...');
-    const videoId = extractVideoId(youtubeLink);
-    let videoInfo;
+  const generateStudy = async () => {
+    setIsGenerating(true);
+    setValidationError('');
     
     try {
-      videoInfo = await getVideoInfo(videoId);
+      console.log('Step 1: Validating URL...');
+      if (!validateYouTubeUrl(youtubeLink)) {
+        setValidationError('Please provide a valid YouTube URL.');
+        setIsGenerating(false);
+        return;
+      }
+      
+      console.log('Step 2: Getting video info...');
+      const videoId = extractVideoId(youtubeLink);
+      let videoInfo;
+      
+      try {
+        videoInfo = await getVideoInfo(videoId);
+      } catch (error) {
+        console.log('Could not fetch video metadata, using defaults');
+        videoInfo = {
+          title: `YouTube Sermon (${videoId})`,
+          author: 'Christian Teacher',
+          thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+          duration: 0
+        };
+      }
+      
+      console.log('Video info:', videoInfo);
+      
+      console.log('Step 3: Analyzing content...');
+      const analysis = await analyzeVideoForBiblicalContent(
+        videoInfo.title,
+        `Author: ${videoInfo.author}`
+      );
+      console.log('Analysis result:', analysis);
+
+      // Validate analysis response
+      if (!analysis || typeof analysis !== 'object') {
+        throw new Error('Invalid analysis response from AI');
+      }
+
+      // Provide defaults if AI didn't return expected data
+      const mainThemes = analysis.mainThemes && Array.isArray(analysis.mainThemes) 
+        ? analysis.mainThemes 
+        : ['Faith', 'Scripture Study', 'Christian Living'];
+
+      const scriptureReferences = analysis.scriptureReferences && Array.isArray(analysis.scriptureReferences)
+        ? analysis.scriptureReferences
+        : ['Matthew 28:19-20', 'Romans 12:1-2'];
+
+      const isChristianContent = analysis.isChristianTeaching !== undefined 
+        ? analysis.isChristianTeaching 
+        : true;
+
+      const confidence = analysis.confidence || 0.8;
+
+      console.log('Processed themes:', mainThemes);
+      console.log('Processed scriptures:', scriptureReferences);
+
+      if (!isChristianContent || confidence < 0.6) {
+        setValidationError(
+          'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
+        );
+        setIsGenerating(false);
+        return;
+      }
+
+      console.log('Step 4: Generating study...');
+      const generatedStudies = await generateBibleStudy(
+        videoInfo.title,
+        `Themes: ${mainThemes.join(', ')}`,
+        mainThemes,
+        scriptureReferences,
+        options
+      );
+      console.log('Generated studies:', generatedStudies);
+      
+      if (!generatedStudies || generatedStudies.length === 0) {
+        throw new Error('No studies were generated');
+      }
+      
+      const studiesWithDates = generatedStudies.map((study, index) => ({
+        day: study.day || (index + 1),
+        title: study.title || `Day ${index + 1}`,
+        passage: study.passage || 'Scripture Reference',
+        content: study.content || 'Study content',
+        date: options.startDate 
+          ? new Date(new Date(options.startDate).getTime() + (index * 86400000))
+              .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+          : ''
+      }));
+      
+      console.log('Studies with dates:', studiesWithDates);
+      setDailyStudies(studiesWithDates);
+      setActiveDay(studiesWithDates[0].day); // ensure activeDay matches first available study
+      setStep('result');
+      
     } catch (error) {
-      console.log('Could not fetch video metadata, using manual input or defaults');
-      videoInfo = {
-        title: videoTitle || `YouTube Sermon (${videoId})`,
-        author: 'Christian Teacher',
-        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-        duration: 0
-      };
+      console.error('Generation error:', error);
+      setValidationError(
+        error.message || 'An error occurred while generating the study. Please try again.'
+      );
+    } finally {
+      setIsGenerating(false);
     }
-    
-    // If user provided manual title, use it
-    if (videoTitle) {
-      videoInfo.title = videoTitle;
-    }
-    
-    console.log('Video info:', videoInfo);
-    
-    console.log('Step 3: Analyzing content...');
-const analysis = await analyzeVideoForBiblicalContent(
-  videoInfo.title,
-  `Author: ${videoInfo.author}`
-);
-console.log('Analysis result:', analysis);
-
-// Validate analysis response
-if (!analysis || typeof analysis !== 'object') {
-  throw new Error('Invalid analysis response from AI');
-}
-
-// Provide defaults if AI didn't return expected data
-const mainThemes = analysis.mainThemes && Array.isArray(analysis.mainThemes) 
-  ? analysis.mainThemes 
-  : ['Faith', 'Scripture Study', 'Christian Living'];
-
-const scriptureReferences = analysis.scriptureReferences && Array.isArray(analysis.scriptureReferences)
-  ? analysis.scriptureReferences
-  : ['Matthew 28:19-20', 'Romans 12:1-2'];
-
-const isChristianContent = analysis.isChristianTeaching !== undefined 
-  ? analysis.isChristianTeaching 
-  : true; // Default to true if uncertain
-
-const confidence = analysis.confidence || 0.8;
-
-console.log('Processed themes:', mainThemes);
-console.log('Processed scriptures:', scriptureReferences);
-
-if (!isChristianContent || confidence < 0.6) {
-  setValidationError(
-    'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
-  );
-  setIsGenerating(false);
-  return;
-}
-
-console.log('Step 4: Generating study...');
-const generatedStudies = await generateBibleStudy(
-  videoInfo.title,
-  `Themes: ${mainThemes.join(', ')}`,
-  mainThemes,
-  scriptureReferences,
-  options
-);
-    console.log('Generated studies:', generatedStudies);
-    
-    if (!generatedStudies || generatedStudies.length === 0) {
-      throw new Error('No studies were generated');
-    }
-    
-    const studiesWithDates = generatedStudies.map((study, index) => ({
-      day: study.day || (index + 1),
-      title: study.title || `Day ${index + 1}`,
-      passage: study.passage || 'Scripture Reference',
-      content: study.content || 'Study content',
-      date: options.startDate 
-        ? new Date(new Date(options.startDate).getTime() + (index * 86400000))
-            .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-        : ''
-    }));
-    
-    console.log('Studies with dates:', studiesWithDates);
-    setDailyStudies(studiesWithDates);
-    setStep('result');
-    
-  } catch (error) {
-    console.error('Generation error:', error);
-    setValidationError(
-      error.message || 'An error occurred while generating the study. Please try again.'
-    );
-  } finally {
-    setIsGenerating(false);
-  }
-};
+  };
 
   const downloadDayStudy = async (format) => {
     const study = dailyStudies.find(s => s.day === activeDay);
@@ -212,7 +205,10 @@ const generatedStudies = await generateBibleStudy(
       const a = document.createElement('a');
       a.href = url;
       a.download = `day-${activeDay}-study.txt`;
+      document.body.appendChild(a);
       a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     } else if (format === 'pdf') {
       exportStudyToPDF(study.content, activeDay, study.title);
     } else if (format === 'word') {
@@ -252,24 +248,18 @@ const generatedStudies = await generateBibleStudy(
     },
   };
 
-const formatStudyContent = (content) => {
-  return content
-    // Headers
-    .replace(/^# (.+)$/gm, '<h1 style="font-size: 28px; font-weight: bold; color: #667eea; margin: 24px 0 12px 0;">$1</h1>')
-    .replace(/^## (.+)$/gm, '<h2 style="font-size: 22px; font-weight: bold; color: #764ba2; margin: 20px 0 10px 0;">$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3 style="font-size: 18px; font-weight: bold; color: #333; margin: 16px 0 8px 0;">$1</h3>')
-    // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: bold; color: #333;">$1</strong>')
-    // Lists
-    .replace(/^- (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px;">$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px; list-style-type: decimal;">$1</li>')
-    // Paragraphs
-    .replace(/\n\n/g, '</p><p style="margin: 12px 0;">')
-    .replace(/^(?!<[hl]|<li)/gm, '<p style="margin: 12px 0;">')
-    // Line breaks
-    .replace(/\n/g, '<br/>');
-};
-
+  const formatStudyContent = (content) => {
+    return content
+      .replace(/^# (.+)$/gm, '<h1 style="font-size: 28px; font-weight: bold; color: #667eea; margin: 24px 0 12px 0;">$1</h1>')
+      .replace(/^## (.+)$/gm, '<h2 style="font-size: 22px; font-weight: bold; color: #764ba2; margin: 20px 0 10px 0;">$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3 style="font-size: 18px; font-weight: bold; color: #333; margin: 16px 0 8px 0;">$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: bold; color: #333;">$1</strong>')
+      .replace(/^- (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px;">$1</li>')
+      .replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px; list-style-type: decimal;">$1</li>')
+      .replace(/\n\n/g, '</p><p style="margin: 12px 0;">')
+      .replace(/^(?!<[hl]|<li)/gm, '<p style="margin: 12px 0;">')
+      .replace(/\n/g, '<br/>');
+  };
 
   // LOGIN SCREEN
   if (step === 'login' && !currentUser) {
@@ -325,7 +315,7 @@ const formatStudyContent = (content) => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength="6"
+                minLength={6}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -392,368 +382,312 @@ const formatStudyContent = (content) => {
     );
   }
 
-// INPUT SCREEN
-if (step === 'input') {
-  return (
-    <div style={styles.gradientBg}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px', color: 'white', paddingTop: '40px' }}>
-          <div style={{ textAlign: 'right', marginBottom: '20px' }}>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                backdropFilter: 'blur(10px)',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              👤 Logout ({currentUser?.email})
-            </button>
+  // INPUT SCREEN
+  if (step === 'input') {
+    return (
+      <div style={styles.gradientBg}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '40px', color: 'white', paddingTop: '40px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <img 
+                src="/logo.png" 
+                alt="SermonDive Logo" 
+                style={{ 
+                  width: '200px', 
+                  height: 'auto',
+                  margin: '0 auto',
+                  display: 'block'
+                }} 
+              />
+            </div>
+            <h1 style={{ 
+              fontSize: '48px', 
+              fontWeight: 'bold', 
+              marginBottom: '12px',
+              fontFamily: "'Proxima Nova', sans-serif"
+            }}>
+              SermonDive
+            </h1>
+            <p style={{ 
+              fontSize: '20px', 
+              opacity: '0.9',
+              fontFamily: "'Poppins', sans-serif"
+            }}>
+              Transform YouTube Sermons into a 5-Day Bible Study Plan
+            </p>
           </div>
 
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}>📖</div>
-          <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '12px' }}>
-            Bible Study Generator
-          </h1>
-          <p style={{ fontSize: '20px', opacity: '0.9' }}>
-            Transform sermons into daily spiritual growth
-          </p>
-        </div>
-
-        {/* Main Card */}
-        <div style={{
-          background: 'white',
-          borderRadius: '24px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          padding: '40px',
-          marginBottom: '24px',
-        }}>
-          <label style={{ 
-            display: 'block', 
-            color: '#333', 
-            fontWeight: 'bold', 
-            fontSize: '24px',
-            marginBottom: '16px' 
+          {/* Main Card */}
+          <div style={{
+            background: 'white',
+            borderRadius: '24px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            padding: '40px',
+            marginBottom: '24px',
           }}>
-  
-            🎥 YouTube Link
-          </label>
-          <p style={{ color: '#666', marginBottom: '16px' }}>
-            Enter a YouTube link of a Christian sermon, teaching, or preaching:
-          </p>
-          
-          <input 
-            type="text"
-            value={youtubeLink}
-            onChange={(e) => setYoutubeLink(e.target.value)}
-            placeholder="https://www.youtube.com/watch?v=..."
-            style={{
-              width: '100%',
-              padding: '16px',
-              fontSize: '16px',
-              border: '2px solid #e0e0e0',
-              borderRadius: '12px',
-              marginTop: '12px',
-              outline: 'none',
-            }}
-          />
-<input 
-  type="text"
-  value={youtubeLink}
-  onChange={(e) => setYoutubeLink(e.target.value)}
-  placeholder="https://www.youtube.com/watch?v=..."
-  style={{
-    width: '100%',
-    padding: '16px',
-    fontSize: '16px',
-    border: '2px solid #e0e0e0',
-    borderRadius: '12px',
-    marginTop: '12px',
-    outline: 'none',
-  }}
-/>
-
-{/* Optional Video Title Input */}
-<div style={{ marginTop: '16px' }}>
-  <button
-    type="button"
-    onClick={() => setShowManualInput(!showManualInput)}
-    style={{
-      background: 'none',
-      border: 'none',
-      color: '#667eea',
-      fontSize: '14px',
-      cursor: 'pointer',
-      textDecoration: 'underline'
-    }}
-  >
-    {showManualInput ? '− Hide manual input' : '+ Can\'t auto-detect video? Enter details manually'}
-  </button>
-</div>
-
-{showManualInput && (
-  <div style={{ marginTop: '16px' }}>
-    <input
-      type="text"
-      value={videoTitle}
-      onChange={(e) => setVideoTitle(e.target.value)}
-      placeholder="Enter video title (optional)"
-      style={{
-        width: '100%',
-        padding: '12px',
-        fontSize: '16px',
-        border: '2px solid #e0e0e0',
-        borderRadius: '12px',
-        outline: 'none',
-      }}
-    />
-  </div>
-)}
-          {/* Options */}
-          <div style={{ marginTop: '32px' }}>
             <label style={{ 
               display: 'block', 
               color: '#333', 
               fontWeight: 'bold', 
-              fontSize: '18px',
-              marginBottom: '12px' 
+              fontSize: '24px',
+              marginBottom: '16px' 
             }}>
-              How would you like this study to be used?
+              🎥 YouTube Link
             </label>
-            <select
-              value={options.usageSelection}
-              onChange={(e) => setOptions({...options, usageSelection: e.target.value})}
+            <p style={{ color: '#666', marginBottom: '16px' }}>
+              Enter a YouTube link of a Christian sermon, teaching, or preaching:
+            </p>
+            
+            <input 
+              type="text"
+              value={youtubeLink}
+              onChange={(e) => setYoutubeLink(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
               style={{
                 width: '100%',
-                padding: '12px',
+                padding: '16px',
                 fontSize: '16px',
                 border: '2px solid #e0e0e0',
                 borderRadius: '12px',
-                outline: 'none',
-              }}
-            >
-              <option>Personal Study</option>
-              <option>Small Group</option>
-              <option>Family Devotions</option>
-              <option>Sharing with Friends</option>
-            </select>
-          </div>
-
-          <div style={{ marginTop: '24px' }}>
-            <label style={{ 
-              display: 'block', 
-              color: '#333', 
-              fontWeight: 'bold', 
-              fontSize: '18px',
-              marginBottom: '12px' 
-            }}>
-              📅 Start Date (Optional)
-            </label>
-            <input
-              type="date"
-              value={options.startDate}
-              onChange={(e) => setOptions({...options, startDate: e.target.value})}
-              style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '16px',
-                border: '2px solid #e0e0e0',
-                borderRadius: '12px',
+                marginTop: '12px',
                 outline: 'none',
               }}
             />
-          </div>
-          
-              {/* After the existing options */}
 
-<div style={{ marginTop: '24px' }}>
-  <label style={{ 
-    display: 'block', 
-    color: '#333', 
-    fontWeight: 'bold', 
-    fontSize: '18px',
-    marginBottom: '12px' 
-  }}>
-    ⏱️ Session Length
-  </label>
-  <select
-    value={options.sessionLength}
-    onChange={(e) => setOptions({...options, sessionLength: e.target.value})}
-    style={{
-      width: '100%',
-      padding: '12px',
-      fontSize: '16px',
-      border: '2px solid #e0e0e0',
-      borderRadius: '12px',
-      outline: 'none',
-    }}
-  >
-    <option>15 min</option>
-    <option>30 min</option>
-    <option>45 min</option>
-    <option>1 hour</option>
-  </select>
-</div>
-
-<div style={{ marginTop: '24px' }}>
-  <label style={{ 
-    display: 'flex',
-    alignItems: 'center',
-    color: '#333',
-    fontSize: '16px',
-    cursor: 'pointer'
-  }}>
-    <input
-      type="checkbox"
-      checked={options.includeDeeperAnalysis}
-      onChange={(e) => setOptions({...options, includeDeeperAnalysis: e.target.checked})}
-      style={{
-        width: '20px',
-        height: '20px',
-        marginRight: '10px',
-        cursor: 'pointer'
-      }}
-    />
-    <span>
-      <strong>Include Deeper Analysis</strong>
-      <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
-        Add Greek/Hebrew word studies and historical context
-      </span>
-    </span>
-  </label>
-</div>
-
-<div style={{ marginTop: '16px' }}>
-  <label style={{ 
-    display: 'flex',
-    alignItems: 'center',
-    color: '#333',
-    fontSize: '16px',
-    cursor: 'pointer'
-  }}>
-    <input
-      type="checkbox"
-      checked={options.includeMemoryVerses}
-      onChange={(e) => setOptions({...options, includeMemoryVerses: e.target.checked})}
-      style={{
-        width: '20px',
-        height: '20px',
-        marginRight: '10px',
-        cursor: 'pointer'
-      }}
-    />
-    <span>
-      <strong>Include Memory Verses</strong>
-      <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
-        Add key verses to memorize each day
-      </span>
-    </span>
-  </label>
-</div>
-
-<div style={{ marginTop: '16px' }}>
-  <label style={{ 
-    display: 'flex',
-    alignItems: 'center',
-    color: '#333',
-    fontSize: '16px',
-    cursor: 'pointer'
-  }}>
-    <input
-      type="checkbox"
-      checked={options.includeActionSteps}
-      onChange={(e) => setOptions({...options, includeActionSteps: e.target.checked})}
-      style={{
-        width: '20px',
-        height: '20px',
-        marginRight: '10px',
-        cursor: 'pointer'
-      }}
-    />
-    <span>
-      <strong>Include Action Steps</strong>
-      <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
-        Add practical application for each day
-      </span>
-    </span>
-  </label>
-</div>
-
-          {/* REAL AI BUTTON */}
-          <button 
-            onClick={generateStudy}
-            disabled={!youtubeLink || isGenerating}
-            style={{
-              width: '100%',
-              padding: '20px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              border: 'none',
-              borderRadius: '12px',
-              cursor: (!youtubeLink || isGenerating) ? 'not-allowed' : 'pointer',
-              marginTop: '32px',
-              background: (!youtubeLink || isGenerating) ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: (!youtubeLink || isGenerating) ? '#666' : 'white',
-              boxShadow: (!youtubeLink || isGenerating) ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
-              transition: 'all 0.3s ease',
-            }}
-          >
-            {isGenerating ? '🤖 Analyzing video & generating study...' : '✨ Generate AI-Powered Study Guide'}
-          </button>
-
-          {validationError && (
-            <div style={{
-              background: '#fee',
-              color: '#c00',
-              padding: '16px',
-              borderRadius: '12px',
-              marginTop: '16px',
-              fontSize: '14px',
-              border: '2px solid #fcc',
-            }}>
-              ❌ {validationError}
+            {/* Options */}
+            <div style={{ marginTop: '32px' }}>
+              <label style={{ 
+                display: 'block', 
+                color: '#333', 
+                fontWeight: 'bold', 
+                fontSize: '18px',
+                marginBottom: '12px' 
+              }}>
+                How would you like this study to be used?
+              </label>
+              <select
+                value={options.usageSelection}
+                onChange={(e) => setOptions({...options, usageSelection: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '16px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '12px',
+                  outline: 'none',
+                }}
+              >
+                <option>Personal Study</option>
+                <option>Small Group</option>
+                <option>Family Devotions</option>
+                <option>Sharing with Friends</option>
+              </select>
             </div>
-          )}
+
+            <div style={{ marginTop: '24px' }}>
+              <label style={{ 
+                display: 'block', 
+                color: '#333', 
+                fontWeight: 'bold', 
+                fontSize: '18px',
+                marginBottom: '12px' 
+              }}>
+                📅 Start Date (Optional)
+              </label>
+              <input
+                type="date"
+                value={options.startDate}
+                onChange={(e) => setOptions({...options, startDate: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '16px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '12px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            
+            <div style={{ marginTop: '24px' }}>
+              <label style={{ 
+                display: 'block', 
+                color: '#333', 
+                fontWeight: 'bold', 
+                fontSize: '18px',
+                marginBottom: '12px' 
+              }}>
+                ⏱️ Session Length
+              </label>
+              <select
+                value={options.sessionLength}
+                onChange={(e) => setOptions({...options, sessionLength: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '16px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '12px',
+                  outline: 'none',
+                }}
+              >
+                <option>15 min</option>
+                <option>30 min</option>
+                <option>45 min</option>
+                <option>1 hour</option>
+              </select>
+            </div>
+
+            <div style={{ marginTop: '24px' }}>
+              <label style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                color: '#333',
+                fontSize: '16px',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={options.includeDeeperAnalysis}
+                  onChange={(e) => setOptions({...options, includeDeeperAnalysis: e.target.checked})}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    marginRight: '10px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <span>
+                  <strong>Include Deeper Analysis</strong>
+                  <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
+                    Add Greek/Hebrew word studies and historical context
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div style={{ marginTop: '16px' }}>
+              <label style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                color: '#333',
+                fontSize: '16px',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={options.includeMemoryVerses}
+                  onChange={(e) => setOptions({...options, includeMemoryVerses: e.target.checked})}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    marginRight: '10px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <span>
+                  <strong>Include Memory Verses</strong>
+                  <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
+                    Add key verses to memorize each day
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div style={{ marginTop: '16px' }}>
+              <label style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                color: '#333',
+                fontSize: '16px',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={options.includeActionSteps}
+                  onChange={(e) => setOptions({...options, includeActionSteps: e.target.checked})}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    marginRight: '10px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <span>
+                  <strong>Include Action Steps</strong>
+                  <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
+                    Add practical application for each day
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <button 
+              onClick={generateStudy}
+              disabled={!youtubeLink || isGenerating}
+              style={{
+                width: '100%',
+                padding: '20px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                border: 'none',
+                borderRadius: '12px',
+                cursor: (!youtubeLink || isGenerating) ? 'not-allowed' : 'pointer',
+                marginTop: '32px',
+                background: (!youtubeLink || isGenerating) ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: (!youtubeLink || isGenerating) ? '#666' : 'white',
+                boxShadow: (!youtubeLink || isGenerating) ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              {isGenerating ? '🤖 Analyzing video & generating study...' : '✨ Generate Study Guide'}
+            </button>
+
+            {validationError && (
+              <div style={{
+                background: '#fee',
+                color: '#c00',
+                padding: '16px',
+                borderRadius: '12px',
+                marginTop: '16px',
+                fontSize: '14px',
+                border: '2px solid #fcc',
+              }}>
+                ❌ {validationError}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-// RESULT SCREEN WITH TABS
-// RESULT SCREEN WITH TABS
-if (!currentStudy) {
-  return (
-    <div style={{ padding: '40px', textAlign: 'center', color: 'white' }}>
-      <h2>Debug Info:</h2>
-      <p>Step: {step}</p>
-      <p>Daily Studies Length: {dailyStudies.length}</p>
-      <p>Active Day: {activeDay}</p>
-      <p>Current Study: {currentStudy ? 'Found' : 'NULL'}</p>
-      <pre style={{ textAlign: 'left', background: 'white', color: 'black', padding: '20px', borderRadius: '8px' }}>
-        {JSON.stringify(dailyStudies, null, 2)}
-      </pre>
-      <button 
-        onClick={() => {
-          console.log('Step:', step);
-          console.log('Daily Studies:', dailyStudies);
-          console.log('Active Day:', activeDay);
-        }}
-        style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
-      >
-        Log Debug Info to Console
-      </button>
-    </div>
-  );
-}
+  // RESULT SCREEN (fallback debug if no currentStudy)
+  if (!currentStudy) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', color: 'white' }}>
+        <h2>Debug Info:</h2>
+        <p>Step: {step}</p>
+        <p>Daily Studies Length: {dailyStudies.length}</p>
+        <p>Active Day: {activeDay}</p>
+        <p>Current Study: {currentStudy ? 'Found' : 'NULL'}</p>
+        <pre style={{ textAlign: 'left', background: 'white', color: 'black', padding: '20px', borderRadius: '8px' }}>
+          {JSON.stringify(dailyStudies, null, 2)}
+        </pre>
+        <button 
+          onClick={() => {
+            console.log('Step:', step);
+            console.log('Daily Studies:', dailyStudies);
+            console.log('Active Day:', activeDay);
+          }}
+          style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
+        >
+          Log Debug Info to Console
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.gradientBg}>
@@ -772,10 +706,72 @@ if (!currentStudy) {
           <span style={{ fontSize: '48px', marginRight: '16px' }}>✅</span>
           <div>
             <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
-              Generated 5-Day Study Plan!
+              5-Day Study Plan Generated!
             </h2>
             <p style={{ fontSize: '16px', opacity: '0.9' }}>
               Click through the tabs to explore each day's generated study
+            </p>
+          </div>
+        </div>
+
+        {/* Video & Summary Section */}
+        <div style={{
+          background: 'white',
+          borderRadius: '24px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          padding: '40px',
+          marginBottom: '24px',
+        }}>
+          {/* Video Embed */}
+          <div style={{
+            position: 'relative',
+            paddingBottom: '56.25%',
+            height: 0,
+            overflow: 'hidden',
+            borderRadius: '16px',
+            marginBottom: '32px'
+          }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${extractVideoId(youtubeLink)}`}
+              title="YouTube video player"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none'
+              }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+
+          {/* Sermon Summary */}
+          <div style={{
+            background: 'linear-gradient(135deg, #f8f7ff 0%, #e8e5ff 100%)',
+            padding: '32px',
+            borderRadius: '16px',
+            border: '2px solid #e0d4f7'
+          }}>
+            <h3 style={{ 
+              fontSize: '24px', 
+              fontWeight: 'bold', 
+              color: '#667eea', 
+              marginBottom: '16px',
+              fontFamily: "'Proxima Nova', sans-serif"
+            }}>
+              📝 Sermon Summary
+            </h3>
+            <p style={{ 
+              fontSize: '16px', 
+              lineHeight: '1.8', 
+              color: '#333',
+              fontFamily: "'Poppins', sans-serif"
+            }}>
+              This sermon explores the themes of {dailyStudies[0]?.passage || 'biblical teaching'} and 
+              focuses on spiritual growth through {dailyStudies[0]?.title?.toLowerCase() || 'faith and perseverance'}. 
+              The teaching emphasizes practical application and deep scriptural understanding.
             </p>
           </div>
         </div>
@@ -841,28 +837,28 @@ if (!currentStudy) {
             </p>
           </div>
 
-{/* Study Content */}
-<div style={{
-  background: 'linear-gradient(135deg, #f3e7ff 0%, #e0f2fe 100%)',
-  padding: '32px',
-  borderRadius: '16px',
-  border: '2px solid #e0d4f7',
-  maxHeight: '500px',
-  overflowY: 'auto',
-  marginBottom: '32px',
-}}>
-  <div 
-    style={{ 
-      color: '#333',
-      fontFamily: 'inherit',
-      lineHeight: '1.8',
-      fontSize: '16px',
-    }}
-    dangerouslySetInnerHTML={{
-      __html: formatStudyContent(currentStudy.content)
-    }}
-  />
-</div>
+          {/* Study Content */}
+          <div style={{
+            background: 'linear-gradient(135deg, #f3e7ff 0%, #e0f2fe 100%)',
+            padding: '32px',
+            borderRadius: '16px',
+            border: '2px solid #e0d4f7',
+            maxHeight: '500px',
+            overflowY: 'auto',
+            marginBottom: '32px',
+          }}>
+            <div 
+              style={{ 
+                color: '#333',
+                fontFamily: 'inherit',
+                lineHeight: '1.8',
+                fontSize: '16px',
+              }}
+              dangerouslySetInnerHTML={{
+                __html: formatStudyContent(currentStudy.content)
+              }}
+            />
+          </div>
 
           {/* Download Buttons */}
           <div style={{ 
@@ -926,11 +922,101 @@ if (!currentStudy) {
             </button>
           </div>
 
+          {/* Share Buttons */}
+          <div style={{
+            marginTop: '24px',
+            padding: '24px',
+            background: '#f9f9f9',
+            borderRadius: '16px',
+            textAlign: 'center'
+          }}>
+            <h4 style={{ 
+              fontSize: '18px', 
+              fontWeight: 'bold', 
+              marginBottom: '16px',
+              fontFamily: "'Proxima Nova', sans-serif"
+            }}>
+              📤 Share This Study
+            </h4>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a
+                href={`mailto:?subject=5-Day Bible Study&body=${encodeURIComponent('Check out this Bible study: ' + window.location.href)}`}
+                style={{
+                  padding: '12px 24px',
+                  background: '#667eea',
+                  color: 'white',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  fontFamily: "'Poppins', sans-serif"
+                }}
+              >
+                📧 Email
+              </a>
+              
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Check out this 5-Day Bible Study!')}&url=${encodeURIComponent(window.location.href)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '12px 24px',
+                  background: '#1DA1F2',
+                  color: 'white',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  fontFamily: "'Poppins', sans-serif"
+                }}
+              >
+                🐦 Twitter
+              </a>
+              
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '12px 24px',
+                  background: '#4267B2',
+                  color: 'white',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  fontFamily: "'Poppins', sans-serif"
+                }}
+              >
+                📘 Facebook
+              </a>
+              
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent('Check out this 5-Day Bible Study: ' + window.location.href)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '12px 24px',
+                  background: '#25D366',
+                  color: 'white',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  fontFamily: "'Poppins', sans-serif"
+                }}
+              >
+                💬 WhatsApp
+              </a>
+            </div>
+          </div>
+
           {/* Navigation Buttons */}
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr 1fr',
             gap: '16px',
+            marginTop: '24px'
           }}>
             <button 
               onClick={() => setActiveDay(Math.max(1, activeDay - 1))}
@@ -975,18 +1061,18 @@ if (!currentStudy) {
             </button>
 
             <button 
-              onClick={() => setActiveDay(Math.min(5, activeDay + 1))}
-              disabled={activeDay === 5}
+              onClick={() => setActiveDay(Math.min(dailyStudies.length, activeDay + 1))}
+              disabled={activeDay === dailyStudies.length}
               style={{
                 padding: '16px',
                 fontSize: '16px',
                 fontWeight: 'bold',
                 border: 'none',
                 borderRadius: '12px',
-                cursor: activeDay === 5 ? 'not-allowed' : 'pointer',
-                background: activeDay === 5 ? '#e0e0e0' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: activeDay === 5 ? '#999' : 'white',
-                boxShadow: activeDay === 5 ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
+                cursor: activeDay === dailyStudies.length ? 'not-allowed' : 'pointer',
+                background: activeDay === dailyStudies.length ? '#e0e0e0' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: activeDay === dailyStudies.length ? '#999' : 'white',
+                boxShadow: activeDay === dailyStudies.length ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
                 transition: 'transform 0.3s ease',
               }}
             >
