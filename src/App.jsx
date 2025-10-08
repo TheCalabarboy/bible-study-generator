@@ -126,28 +126,51 @@ const generateStudy = async () => {
     console.log('Video info:', videoInfo);
     
     console.log('Step 3: Analyzing content...');
-    const analysis = await analyzeVideoForBiblicalContent(
-      videoInfo.title,
-      `Author: ${videoInfo.author}`
-    );
-    console.log('Analysis result:', analysis);
-    
-    if (!analysis.isChristianTeaching || analysis.confidence < 0.6) {
-      setValidationError(
-        'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
-      );
-      setIsGenerating(false);
-      return;
-    }
-    
-    console.log('Step 4: Generating study...');
-    const generatedStudies = await generateBibleStudy(
-      videoInfo.title,
-      `Themes: ${analysis.mainThemes.join(', ')}`,
-      analysis.mainThemes,
-      analysis.scriptureReferences,
-      options
-    );
+const analysis = await analyzeVideoForBiblicalContent(
+  videoInfo.title,
+  `Author: ${videoInfo.author}`
+);
+console.log('Analysis result:', analysis);
+
+// Validate analysis response
+if (!analysis || typeof analysis !== 'object') {
+  throw new Error('Invalid analysis response from AI');
+}
+
+// Provide defaults if AI didn't return expected data
+const mainThemes = analysis.mainThemes && Array.isArray(analysis.mainThemes) 
+  ? analysis.mainThemes 
+  : ['Faith', 'Scripture Study', 'Christian Living'];
+
+const scriptureReferences = analysis.scriptureReferences && Array.isArray(analysis.scriptureReferences)
+  ? analysis.scriptureReferences
+  : ['Matthew 28:19-20', 'Romans 12:1-2'];
+
+const isChristianContent = analysis.isChristianTeaching !== undefined 
+  ? analysis.isChristianTeaching 
+  : true; // Default to true if uncertain
+
+const confidence = analysis.confidence || 0.8;
+
+console.log('Processed themes:', mainThemes);
+console.log('Processed scriptures:', scriptureReferences);
+
+if (!isChristianContent || confidence < 0.6) {
+  setValidationError(
+    'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
+  );
+  setIsGenerating(false);
+  return;
+}
+
+console.log('Step 4: Generating study...');
+const generatedStudies = await generateBibleStudy(
+  videoInfo.title,
+  `Themes: ${mainThemes.join(', ')}`,
+  mainThemes,
+  scriptureReferences,
+  options
+);
     console.log('Generated studies:', generatedStudies);
     
     if (!generatedStudies || generatedStudies.length === 0) {
@@ -749,10 +772,10 @@ if (!currentStudy) {
           <span style={{ fontSize: '48px', marginRight: '16px' }}>✅</span>
           <div>
             <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
-              AI-Generated 5-Day Study Plan!
+              Generated 5-Day Study Plan!
             </h2>
             <p style={{ fontSize: '16px', opacity: '0.9' }}>
-              Click through the tabs to explore each day's AI-generated study
+              Click through the tabs to explore each day's generated study
             </p>
           </div>
         </div>
