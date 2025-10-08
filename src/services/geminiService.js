@@ -95,37 +95,170 @@ Be strict - only return isChristianTeaching: true if it's clearly biblical Chris
 export async function generateBibleStudy(videoTitle, videoDescription, themes, scriptures, options) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
+  // Customize the prompt based on usage type
+  let usageInstructions = '';
+  let questionType = 'reflection';
+  
+  switch(options.usageSelection) {
+    case 'Personal Study':
+      usageInstructions = `
+This study is for PERSONAL DEVOTIONAL use. Include:
+- Deep personal reflection questions
+- "I/my/me" language for introspection
+- Prayer focuses for individual spiritual growth
+- Personal application action steps`;
+      questionType = 'personal reflection';
+      break;
+      
+    case 'Small Group':
+      usageInstructions = `
+This study is for SMALL GROUP DISCUSSION. Include:
+- Discussion questions that spark conversation
+- "We/us/our" language for community
+- Group activity suggestions
+- Questions with multiple perspectives
+- Prayer focuses for the group`;
+      questionType = 'group discussion';
+      break;
+      
+    case 'Family Devotions':
+      usageInstructions = `
+This study is for FAMILY DEVOTIONS. Include:
+- Age-appropriate language accessible to children
+- Family-friendly illustrations and examples
+- "Our family" language
+- Questions children can understand and answer
+- Family prayer focuses
+- Simple action steps the whole family can do together`;
+      questionType = 'family discussion';
+      break;
+      
+    case 'Sharing with Friends':
+      usageInstructions = `
+This study is for SHARING WITH FRIENDS (evangelistic/introductory). Include:
+- Accessible language for those new to faith
+- Clear Gospel connections
+- Questions that don't assume Bible knowledge
+- Welcoming and inviting tone
+- Prayer focuses for spiritual seeking`;
+      questionType = 'exploratory discussion';
+      break;
+  }
+
   const prompt = `
-You are a Christian pastor and Bible study author. Create a detailed 5-day Bible study guide.
+You are a Christian pastor and Bible study author. Create a detailed 5-day Bible study guide following the EXACT structure below.
 
-Video Title: ${videoTitle}
-Main Themes: ${themes.join(', ')}
-Scripture References: ${scriptures.join(', ')}
-Study Type: ${options.usageSelection}
-Session Length: ${options.sessionLength}
+VIDEO TITLE: ${videoTitle}
+MAIN THEMES: ${themes.join(', ')}
+KEY SCRIPTURES: ${scriptures.join(', ')}
 
-${options.includeDeeperAnalysis ? 'INCLUDE: Greek/Hebrew word studies and historical context.' : ''}
-${options.includeMemoryVerses ? 'INCLUDE: One memory verse for each day.' : ''}
-${options.includeActionSteps ? 'INCLUDE: Practical action steps for each day.' : ''}
+USAGE TYPE: ${options.usageSelection}
+${usageInstructions}
 
-Create 5 daily studies. For EACH day provide:
-1. Clear title
-2. Main scripture passage
-3. Context and explanation (2-3 paragraphs)
-4. 5 ${options.usageSelection === 'Personal Study' ? 'reflection' : 'discussion'} questions
-5. Prayer point
-6. Action step
+SESSION LENGTH: ${options.sessionLength}
+${options.includeDeeperAnalysis ? 'INCLUDE: Greek/Hebrew word studies and historical context in each day.' : ''}
+${options.includeMemoryVerses ? 'INCLUDE: One key memory verse for each day.' : ''}
+${options.includeActionSteps ? 'INCLUDE: One specific, practical action step for each day.' : ''}
 
-CRITICAL: Return ONLY a valid JSON array. No markdown, no code blocks, no extra text.
-Do NOT use newlines or special characters in the content strings. Use \\n for line breaks.
+CRITICAL INSTRUCTIONS:
+1. Return ONLY valid JSON - no markdown, no code blocks, no extra text
+2. Use \\n\\n for paragraph breaks and \\n for line breaks in content strings
+3. Follow the EXACT structure below for each day
 
-Format:
+REQUIRED 5-DAY STRUCTURE:
+
+DAY 1: FOUNDATION
+Focus: Introduce the main theme and establish biblical foundation
+Include:
+- Brief introduction (2-3 sentences)
+- Primary scripture passage with context
+- 3-4 key theological truths
+- 5 ${questionType} questions
+- Specific prayer focus
+${options.includeMemoryVerses ? '- Memory verse' : ''}
+${options.includeActionSteps ? '- Practical action step' : ''}
+
+DAY 2: BIBLICAL CONTEXT
+Focus: Explore broader scriptural support and background
+Include:
+- How this theme appears throughout Scripture
+- Old and New Testament connections
+- Historical and cultural context
+- 5 ${questionType} questions
+- Prayer focus for wisdom and insight
+${options.includeMemoryVerses ? '- Memory verse' : ''}
+${options.includeActionSteps ? '- Practical action step' : ''}
+
+DAY 3: THEOLOGICAL DEPTH
+Focus: Dive into doctrinal significance and Gospel connections
+Include:
+- How this truth relates to the Gospel
+- Connection to core Christian doctrine
+- Theological implications
+${options.includeDeeperAnalysis ? '- Greek/Hebrew word study' : ''}
+- 5 ${questionType} questions
+- Prayer focus for sound doctrine
+${options.includeMemoryVerses ? '- Memory verse' : ''}
+${options.includeActionSteps ? '- Practical action step' : ''}
+
+DAY 4: PRACTICAL APPLICATION
+Focus: Living out the truth in daily life
+Include:
+- Concrete ways to apply this teaching
+- Real-life scenarios and examples
+- Obstacles to application and how to overcome them
+- 5 ${questionType} questions focused on obedience
+- Prayer focus for transformation
+${options.includeMemoryVerses ? '- Memory verse' : ''}
+${options.includeActionSteps ? '- Practical action step' : ''}
+
+DAY 5: INTEGRATION & RESPONSE
+Focus: Worship, commitment, and moving forward
+Include:
+- Summary of key learnings from the week
+- Call to worship and response
+- Long-term life integration
+- 5 ${questionType} questions about commitment
+- Prayer of thanksgiving and dedication
+${options.includeMemoryVerses ? '- Memory verse' : ''}
+${options.includeActionSteps ? '- Practical action step' : ''}
+
+FORMAT EACH DAY'S CONTENT AS MARKDOWN:
+Use this exact structure for each day's "content" field:
+
+# Day [Number]: [Title]\\n\\n## Introduction\\n[2-3 sentence intro]\\n\\n## Scripture Reading: [Reference]\\n[Passage context]\\n\\n## Key Points\\n1. [Point 1]\\n2. [Point 2]\\n3. [Point 3]\\n\\n## ${questionType.charAt(0).toUpperCase() + questionType.slice(1)} Questions\\n1. [Question 1]\\n2. [Question 2]\\n3. [Question 3]\\n4. [Question 4]\\n5. [Question 5]\\n\\n## Prayer Focus\\n[Specific prayer point]${options.includeMemoryVerses ? '\\n\\n## Memory Verse\\n[Verse reference and text]' : ''}${options.includeActionSteps ? '\\n\\n## Action Step\\n[Specific action]' : ''}
+
+RETURN ONLY THIS JSON ARRAY (no markdown, no code blocks):
 [
   {
     "day": 1,
-    "title": "Day Title",
-    "passage": "Scripture Reference",
-    "content": "Full content with \\n for line breaks"
+    "title": "Foundation: [Engaging Title]",
+    "passage": "[Primary Scripture Reference]",
+    "content": "[Full formatted content as described above]"
+  },
+  {
+    "day": 2,
+    "title": "Biblical Context: [Engaging Title]",
+    "passage": "[Scripture Reference]",
+    "content": "[Full formatted content]"
+  },
+  {
+    "day": 3,
+    "title": "Theological Depth: [Engaging Title]",
+    "passage": "[Scripture Reference]",
+    "content": "[Full formatted content]"
+  },
+  {
+    "day": 4,
+    "title": "Practical Application: [Engaging Title]",
+    "passage": "[Scripture Reference]",
+    "content": "[Full formatted content]"
+  },
+  {
+    "day": 5,
+    "title": "Integration & Response: [Engaging Title]",
+    "passage": "[Scripture Reference]",
+    "content": "[Full formatted content]"
   }
 ]
 `;
