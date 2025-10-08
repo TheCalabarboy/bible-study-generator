@@ -7,22 +7,17 @@ function sanitizeJSON(jsonString) {
   // Remove markdown code blocks
   let cleaned = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '');
   
-  // Find JSON object
-  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  // Find JSON object or array
+  const jsonMatch = cleaned.match(/[\[{][\s\S]*[\]}]/);
   if (!jsonMatch) return null;
   
   let jsonText = jsonMatch[0];
   
-  // Fix common JSON issues
-  // Remove control characters (newlines, tabs, etc. within strings)
+  // Fix common JSON issues - remove control characters
   jsonText = jsonText.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
   
   return jsonText;
 }
-
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 export async function analyzeVideoForBiblicalContent(videoTitle, videoDescription) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
@@ -96,32 +91,6 @@ Be strict - only return isChristianTeaching: true if it's clearly biblical Chris
     };
   }
 }
-    
-    }
-    
-    // If no JSON found, return safe defaults
-    console.warn('Could not parse JSON from Gemini, using defaults');
-    return {
-      isChristianTeaching: true,
-      confidence: 0.7,
-      reason: 'Could not parse AI response, proceeding with generation',
-      mainThemes: ['Faith', 'Biblical Teaching', 'Christian Living'],
-      scriptureReferences: ['Matthew 28:19-20', 'Romans 12:1-2']
-    };
-    
-  } catch (error) {
-    console.error('Gemini analysis error:', error);
-    
-    // Return safe defaults instead of throwing
-    return {
-      isChristianTeaching: true,
-      confidence: 0.7,
-      reason: 'Analysis unavailable, proceeding with generation',
-      mainThemes: ['Faith', 'Biblical Teaching', 'Christian Living'],
-      scriptureReferences: ['Matthew 28:19-20', 'Romans 12:1-2']
-    };
-  }
-}
 
 export async function generateBibleStudy(videoTitle, videoDescription, themes, scriptures, options) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
@@ -171,23 +140,19 @@ Format:
     const sanitized = sanitizeJSON(text);
     
     if (sanitized) {
-      // For arrays, we need different regex
-      const arrayMatch = sanitized.match(/\[[\s\S]*\]/);
-      if (arrayMatch) {
-        try {
-          const parsed = JSON.parse(arrayMatch[0]);
-          
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed.map((study, index) => ({
-              day: study.day || (index + 1),
-              title: study.title || `Day ${index + 1}`,
-              passage: study.passage || 'Scripture Reference',
-              content: study.content || 'Study content'
-            }));
-          }
-        } catch (parseError) {
-          console.error('Study JSON parse error:', parseError);
+      try {
+        const parsed = JSON.parse(sanitized);
+        
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((study, index) => ({
+            day: study.day || (index + 1),
+            title: study.title || `Day ${index + 1}`,
+            passage: study.passage || 'Scripture Reference',
+            content: study.content || 'Study content'
+          }));
         }
+      } catch (parseError) {
+        console.error('Study JSON parse error:', parseError);
       }
     }
     
