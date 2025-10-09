@@ -4,6 +4,7 @@ import { exportStudyToPDF } from './utils/exportToPDF';
 import { exportStudyToWord } from './utils/exportToWord';
 import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/geminiService';
 import { extractVideoId, getVideoInfo, validateYouTubeUrl } from './services/youtubeService';
+import logo from './assets/logo.png';
 
 function App() {
   // Temporarily bypass auth to test AI features
@@ -391,15 +392,15 @@ function App() {
           <div style={{ textAlign: 'center', marginBottom: '40px', color: 'white', paddingTop: '40px' }}>
             <div style={{ marginBottom: '16px' }}>
               <img 
-                src="/logo.png" 
-                alt="SermonDive Logo" 
-                style={{ 
-                  width: '200px', 
-                  height: 'auto',
-                  margin: '0 auto',
-                  display: 'block'
-                }} 
-              />
+              src={logo} 
+              alt="SermonDive Logo" 
+              style={{ 
+                width: '200px', 
+                height: 'auto',
+                margin: '0 auto',
+                display: 'block'
+              }} 
+            />
             </div>
             <h1 style={{ 
               fontSize: '48px', 
