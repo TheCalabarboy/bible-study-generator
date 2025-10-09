@@ -4,7 +4,7 @@ import { exportStudyToPDF } from './utils/exportToPDF';
 import { exportStudyToWord } from './utils/exportToWord';
 import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/geminiService';
 import { extractVideoId, getVideoInfo, validateYouTubeUrl } from './services/youtubeService';
-import logo from './assets/Logo.png';
+import Logo from './assets/Logo.png';
 
 function App() {
   // Temporarily bypass auth to test AI features
