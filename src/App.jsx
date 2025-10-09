@@ -5,6 +5,7 @@ import { exportStudyToWord } from './utils/exportToWord';
 import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/geminiService';
 import { extractVideoId, getVideoInfo, validateYouTubeUrl } from './services/youtubeService';
 import Logo from './assets/Logo.png';
+import { logEvent } from './utils/analytics';
 
 function App() {
   // Temporarily bypass auth to test AI features
@@ -93,6 +94,10 @@ function App() {
     setValidationError('');
     
     try {
+
+     // Track that someone started generating a study
+    logEvent('Study', 'Generate_Started', youtubeLink);
+
       console.log('Step 1: Validating URL...');
       if (!validateYouTubeUrl(youtubeLink)) {
         setValidationError('Please provide a valid YouTube URL.');
@@ -183,6 +188,8 @@ function App() {
       
       console.log('Studies with dates:', studiesWithDates);
       setDailyStudies(studiesWithDates);
+      // Track successful study generation
+      logEvent('Study', 'Generate_Success', videoInfo.title);
       setActiveDay(studiesWithDates[0].day); // ensure activeDay matches first available study
       setStep('result');
       
@@ -196,26 +203,26 @@ function App() {
     }
   };
 
-  const downloadDayStudy = async (format) => {
-    const study = dailyStudies.find(s => s.day === activeDay);
-    if (!study) return;
-    
-    if (format === 'txt') {
-      const blob = new Blob([study.content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `day-${activeDay}-study.txt`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } else if (format === 'pdf') {
-      exportStudyToPDF(study.content, activeDay, study.title);
-    } else if (format === 'word') {
-      await exportStudyToWord(study.content, activeDay, study.title);
-    }
-  };
+const downloadDayStudy = async (format) => {
+  const study = dailyStudies.find(s => s.day === activeDay);
+  if (!study) return;
+  
+  // Track download event
+  logEvent('Download', `Day_${activeDay}_${format.toUpperCase()}`, study.title);  // ← ADD THIS LINE
+  
+  if (format === 'txt') {
+    const blob = new Blob([study.content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `day-${activeDay}-study.txt`;
+    a.click();
+  } else if (format === 'pdf') {
+    exportStudyToPDF(study.content, activeDay, study.title);
+  } else if (format === 'word') {
+    await exportStudyToWord(study.content, activeDay, study.title);
+  }
+};
 
   // Reusable styles
   const styles = {
@@ -1020,7 +1027,8 @@ function App() {
             marginTop: '24px'
           }}>
             <button 
-              onClick={() => setActiveDay(Math.max(1, activeDay - 1))}
+              onClick={() => {setActiveDay(Math.max(1, activeDay - 1))
+              logEvent('Navigation', 'Previous_Day', `Day ${activeDay - 1}`);}}
               disabled={activeDay === 1}
               style={{
                 padding: '16px',
@@ -1040,6 +1048,7 @@ function App() {
 
             <button 
               onClick={() => {
+                logEvent('Navigation', 'New_Study', 'From Results Page');
                 setStep('input');
                 setYoutubeLink('');
                 setActiveDay(1);
@@ -1062,7 +1071,8 @@ function App() {
             </button>
 
             <button 
-              onClick={() => setActiveDay(Math.min(dailyStudies.length, activeDay + 1))}
+              onClick={() => {setActiveDay(Math.min(dailyStudies.length, activeDay + 1))
+              logEvent('Navigation', 'Next_Day', `Day ${activeDay + 1}`);}}
               disabled={activeDay === dailyStudies.length}
               style={{
                 padding: '16px',
