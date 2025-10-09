@@ -437,7 +437,7 @@ function App() {
               🎥 YouTube Link
             </label>
             <p style={{ color: '#666', marginBottom: '16px' }}>
-              Enter a YouTube link of a Christian sermon, teaching, or preaching:
+              Enter a YouTube link of a Christian Sermon:
             </p>
             
             <input 
