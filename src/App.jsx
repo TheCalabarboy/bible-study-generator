@@ -390,9 +390,9 @@ function App() {
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '40px', color: 'white', paddingTop: '40px' }}>
-            <div style={{ marginBottom: '16px' }}>
-              <img 
-              src={logo} 
+          <div style={{ marginBottom: '16px' }}>
+            <img 
+              src={`${window.location.origin}/logo.png`}
               alt="SermonDive Logo" 
               style={{ 
                 width: '200px', 
@@ -401,7 +401,7 @@ function App() {
                 display: 'block'
               }} 
             />
-            </div>
+          </div>
             <h1 style={{ 
               fontSize: '48px', 
               fontWeight: 'bold', 
