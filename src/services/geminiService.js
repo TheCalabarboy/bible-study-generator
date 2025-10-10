@@ -1,12 +1,13 @@
 // src/services/geminiService.js
 // Requires: npm i @google/generative-ai youtube-transcript
-// If you cannot or don't want to use youtube-transcript in the browser due to CORS,
-// this still tries gracefully and falls back to title/description-only mode.
+// NOTE: In many browsers, YouTube captions endpoints block CORS.
+// This file still tries in-browser; if transcript length keeps logging 0,
+// move transcript fetching to a tiny server proxy (as discussed).
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { YoutubeTranscript } from 'youtube-transcript';
 
-const MODEL_NAME = 'gemini-2.5-pro'; // per your note
+const MODEL_NAME = 'gemini-2.5-pro';
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 /* ----------------------------- Utilities ----------------------------- */
@@ -52,7 +53,6 @@ function average(nums) {
 
 export async function fetchYouTubeTranscript(videoId) {
   try {
-    // Tries official/auto captions. Returns array of {text, offset, duration}
     const items = await YoutubeTranscript.fetchTranscript(videoId);
     const full = items.map(i => i.text).join(' ').replace(/\s+/g, ' ').trim();
     return { ok: true, text: full, items };
@@ -114,12 +114,12 @@ export async function analyzeVideoForBiblicalContent(videoTitle, videoDescriptio
     const t = await fetchYouTubeTranscript(videoId);
     if (t.ok) transcript = t.text;
   }
+  console.log('Transcript length (analyze):', transcript ? transcript.length : 0);
 
   // If transcript is long, map-reduce across chunks
   if (transcript && transcript.length > 4000) {
     const chunks = chunkText(transcript, 12000, 300);
 
-    // Map: analyze each chunk with a strict JSON schema
     const partials = [];
     for (const chunk of chunks) {
       const res = await model.generateContent({
@@ -214,6 +214,7 @@ export async function generateBibleStudy(videoTitle, videoDescription, themes, s
     const t = await fetchYouTubeTranscript(videoId);
     if (t.ok) transcript = t.text;
   }
+  console.log('Transcript length (study):', transcript ? transcript.length : 0);
 
   // Trim transcript to a manageable context; the structure/pattern does not need the entire thing.
   // Prefer a few instructive slices: head, middle, tail.
@@ -235,21 +236,22 @@ export async function generateBibleStudy(videoTitle, videoDescription, themes, s
   switch (options.usageSelection) {
     case 'Personal Study':
       usageInstructions = `Use "I/my/me" language; prayer focuses for individual growth; include personal application.`;
-      questionType = 'personal reflection';
+      questionType = 'Reflection Questions';
       break;
     case 'Small Group':
       usageInstructions = `Use "we/us/our" language; include discussion starters and group activities.`;
-      questionType = 'group discussion';
+      questionType = 'Discussion Questions';
       break;
     case 'Family Devotions':
       usageInstructions = `Use family-friendly language; include child-accessible examples and a simple family action.`;
-      questionType = 'family discussion';
+      questionType = 'Family Questions';
       break;
     case 'Sharing with Friends':
       usageInstructions = `Use accessible, invitational language; connect clearly to the Gospel for newcomers.`;
-      questionType = 'exploratory discussion';
+      questionType = 'Exploratory Questions';
       break;
     default:
+      questionType = 'Reflection Questions';
       break;
   }
 
@@ -257,64 +259,90 @@ export async function generateBibleStudy(videoTitle, videoDescription, themes, s
   const includeMemory = !!options.includeMemoryVerses;
   const includeAction = !!options.includeActionSteps;
 
-  const studyPrompt =
-`You are an experienced pastor and Bible study author. Write a detailed 5-day study grounded ONLY in the provided transcript excerpts and themes.
+  // —— Beefed-up expert prompt (grounded, exegetical, pastoral) ——
+  const studyPrompt = `
+You are a seasoned pastor-theologian and Bible study author. Produce a five-day study that is
+(1) grounded ONLY in the provided transcript excerpts and the supplied themes/scriptures,
+(2) exegetically rigorous (historical–grammatical method),
+(3) pastorally warm and spiritually formative,
+(4) precise, non-generic, and specific to THIS sermon.
 
-VIDEO TITLE: ${videoTitle}
-THEMES: ${themes.join(', ')}
-KEY SCRIPTURES: ${scriptures.join(', ')}
+CONTEXT
+• VIDEO TITLE: ${videoTitle}
+• THEMES (guide rails): ${themes.join(', ')}
+• KEY SCRIPTURES (seed list): ${scriptures.join(', ')}
+• TRANSCRIPT EXCERPTS (primary evidence; do not invent content not supported here):
+${transcriptSlices || '[No transcript available — respond cautiously and avoid speculative claims.]'}
 
-USAGE TYPE: ${options.usageSelection}
-INSTRUCTIONS: ${usageInstructions}
-SESSION LENGTH: ${options.sessionLength}
-${includeDeeper ? 'INCLUDE deeper analysis (Greek/Hebrew & historical context) when relevant.' : ''}
-${includeMemory ? 'INCLUDE one key memory verse each day.' : ''}
-${includeAction ? 'INCLUDE one practical action step each day.' : ''}
+USAGE PROFILE
+• TYPE: ${options.usageSelection}
+• SESSION LENGTH: ${options.sessionLength}
+• INCLUDE: ${includeDeeper ? 'Deeper analysis (Greek/Hebrew & historical context).' : '—'}
+• INCLUDE: ${includeMemory ? 'One key memory verse per day.' : '—'}
+• INCLUDE: ${includeAction ? 'One practical action step per day.' : '—'}
 
-TRANSCRIPT EXCERPTS (evidence):
-${transcriptSlices || '[Transcript unavailable; use themes/scriptures cautiously.]'}
+AUTHORSHIP & THEOLOGY (do not browse the web)
+• Emulate expert-level exegesis and catechesis informed by broadly respected scholarship
+  (e.g., early church fathers, Reformers, classic evangelical commentators, creeds/confessions),
+  but DO NOT fabricate citations, dates, or page numbers.
+• Keep Christ-centered and Trinitarian; make Gospel connections explicit where faithful to the text.
+• Distinguish primary doctrines from secondary debates; note major interpretive options fairly,
+  then defend the most text-faithful reading from the transcript and Scripture.
+• Integrate original-language insight (Greek/Hebrew) ONLY when it clarifies the text; transliterate terms and define them plainly.
 
-OUTPUT RULES:
-- Return ONLY valid JSON (no markdown fences).
-- Use this exact array shape of five objects (days 1–5).
-- Content should be Markdown, but keep it inside JSON strings.
+OUTPUT SPEC
+• Return ONLY valid JSON (no markdown fences, no extra text).
+• JSON MUST be an array of exactly five objects with fields: day, title, passage, content.
+• Inside each day's "content" string, use Markdown sections exactly as shown below.
+• Keep tone pastoral, clear, and concrete; avoid clichés and filler.
 
-ARRAY SHAPE:
-[
-  {"day":1,"title":"...", "passage":"...", "content":"..."},
-  {"day":2,"title":"...", "passage":"...", "content":"..."},
-  {"day":3,"title":"...", "passage":"...", "content":"..."},
-  {"day":4,"title":"...", "passage":"...", "content":"..."},
-  {"day":5,"title":"...", "passage":"...", "content":"..."}
-]
+PER-DAY REQUIREMENTS (tailor to the transcript)
+Day 1 — FOUNDATION: Introduce the theme; establish biblical basis from the sermon’s anchor text.
+Day 2 — BIBLICAL CONTEXT: Trace theme across Scripture; OT→NT links; historical background.
+Day 3 — THEOLOGICAL DEPTH: Doctrinal significance; Gospel connection; careful nuance.
+Day 4 — PRACTICAL APPLICATION: Concrete practices, obstacles, and patterns of obedience.
+Day 5 — INTEGRATION & RESPONSE: Summation, worship, long-term practices and community.
 
-CONTENT TEMPLATE INSIDE EACH "content" FIELD:
+MANDATORY MARKDOWN SHAPE FOR EACH "content" FIELD
 # Day [Number]: [Title]
 
 ## Introduction
-[2-3 paragraphs]
+[2–3 paragraphs tightly tied to the transcript; avoid fluff.]
 
-## Scripture Reading: [Reference]
-[Context + how the sermon used this.]
+## Scripture Reading: [Primary Reference]
+[Give immediate context (author/audience/setting), flow of argument, and why the sermon used it.]
 
 ## Key Points
-1. ...
-2. ...
-3. ...
+1. [Point 1 — rooted in transcript and text]
+2. [Point 2 — with cross-refs, briefly explained]
+3. [Point 3 — with doctrinal insight tied to the Gospel]
+${includeDeeper ? '4. [Original-language or historical note that genuinely clarifies meaning]' : ''}
 
-## ${questionType.charAt(0).toUpperCase() + questionType.slice(1)} Questions
-1. ...
-2. ...
-3. ...
-4. ...
-5. ...
+## ${questionType}
+1. [...]
+2. [...]
+3. [...]
+4. [...]
+5. [...]
 
 ## Prayer Focus
-[Specific prayer]
+[A short, specific prayer that reflects the day’s teaching.]
+${includeMemory ? '\n## Memory Verse\n[Book Chapter:Verse — quote the verse faithfully]\n' : ''}${includeAction ? '\n## Action Step\n[One concrete, measurable practice for the next 24–48 hours]\n' : ''}
 
-${includeMemory ? '## Memory Verse\n[Reference and text]\n' : ''}${includeAction ? '## Action Step\n[Specific step]\n' : ''}
+CONSTRAINTS
+• Do not assert facts not supported by the transcript or Scripture. If uncertain, say so briefly.
+• Quote Scripture succinctly; reference clearly (e.g., John 15:1–5). Avoid paraphrasing that distorts meaning.
+• Avoid culture wars and speculation; aim for spiritual formation grounded in the text.
 
-Ensure claims are supported by the transcript excerpts when possible.`;
+RETURN FORMAT (JSON ONLY; EXACTLY FIVE ITEMS):
+[
+  {"day":1,"title":"...","passage":"...","content":"..."},
+  {"day":2,"title":"...","passage":"...","content":"..."},
+  {"day":3,"title":"...","passage":"...","content":"..."},
+  {"day":4,"title":"...","passage":"...","content":"..."},
+  {"day":5,"title":"...","passage":"...","content":"..."}
+]
+`.trim();
 
   const res = await model.generateContent({
     systemInstruction: 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema.',
