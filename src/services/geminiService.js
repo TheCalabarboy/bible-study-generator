@@ -1,338 +1,336 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// src/services/geminiService.js
+// Requires: npm i @google/generative-ai youtube-transcript
+// If you cannot or don't want to use youtube-transcript in the browser due to CORS,
+// this still tries gracefully and falls back to title/description-only mode.
 
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { YoutubeTranscript } from 'youtube-transcript';
+
+const MODEL_NAME = 'gemini-2.5-pro'; // per your note
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
-// Helper function to sanitize JSON strings
-function sanitizeJSON(jsonString) {
-  // Remove markdown code blocks
-  let cleaned = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-  
-  // Find JSON object or array
-  const jsonMatch = cleaned.match(/[\[{][\s\S]*[\]}]/);
-  if (!jsonMatch) return null;
-  
-  let jsonText = jsonMatch[0];
-  
-  // Fix common JSON issues - remove control characters
-  jsonText = jsonText.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-  
-  return jsonText;
+/* ----------------------------- Utilities ----------------------------- */
+
+function safeLower(s) { return typeof s === 'string' ? s.toLowerCase() : s; }
+
+function chunkText(text, maxChars = 12000, overlap = 300) {
+  if (!text) return [];
+  const chunks = [];
+  let i = 0;
+  while (i < text.length) {
+    const end = Math.min(text.length, i + maxChars);
+    chunks.push(text.slice(i, end));
+    i = end - overlap; // small overlap to keep context continuity
+    if (i < 0) i = 0;
+    if (i >= text.length) break;
+  }
+  return chunks;
 }
 
-export async function analyzeVideoForBiblicalContent(videoTitle, videoDescription) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-exp' });
-
-  const prompt = `
-You are a biblical content analyzer. Analyze this YouTube video and determine if it's a Christian biblical teaching, sermon, or preaching.
-
-Video Title: ${videoTitle}
-Video Description: ${videoDescription}
-
-IMPORTANT: Respond with ONLY valid JSON. Do not include any newlines, tabs, or special characters in string values.
-Use spaces instead of newlines. Keep all text on single lines.
-
-Required format:
-{
-  "isChristianTeaching": true,
-  "confidence": 0.9,
-  "reason": "Brief explanation without line breaks",
-  "mainThemes": ["Theme1", "Theme2", "Theme3"],
-  "scriptureReferences": ["Reference1", "Reference2"]
+function dedupeStrings(arr) {
+  const seen = new Set();
+  const out = [];
+  for (const s of arr || []) {
+    const key = safeLower(s || '').trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(s);
+  }
+  return out;
 }
 
-Be strict - only return isChristianTeaching: true if it's clearly biblical Christian content.
-`;
+function unionThemes(arrays) {
+  return dedupeStrings([].concat(...arrays));
+}
 
+function average(nums) {
+  if (!nums?.length) return 0;
+  return nums.reduce((a, b) => a + (b || 0), 0) / nums.length;
+}
+
+/* ---------------------- Transcript Retrieval ------------------------ */
+
+export async function fetchYouTubeTranscript(videoId) {
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    console.log('Raw Gemini response:', text);
-    
-    const sanitized = sanitizeJSON(text);
-    
-    if (sanitized) {
-      try {
-        const parsed = JSON.parse(sanitized);
-        
-        // Validate and return with defaults
-        return {
-          isChristianTeaching: parsed.isChristianTeaching ?? true,
-          confidence: parsed.confidence ?? 0.7,
-          reason: parsed.reason ?? 'Analysis completed',
-          mainThemes: Array.isArray(parsed.mainThemes) ? parsed.mainThemes : ['Faith', 'Scripture'],
-          scriptureReferences: Array.isArray(parsed.scriptureReferences) ? parsed.scriptureReferences : ['Matthew 28:19-20']
-        };
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        console.log('Failed to parse:', sanitized);
-      }
-    }
-    
-    // Return safe defaults
-    console.warn('Could not parse Gemini response, using defaults');
-    return {
-      isChristianTeaching: true,
-      confidence: 0.7,
-      reason: 'AI analysis unavailable',
-      mainThemes: ['Faith', 'Biblical Teaching', 'Christian Living'],
-      scriptureReferences: ['Matthew 28:19-20', 'Romans 12:1-2']
-    };
-    
-  } catch (error) {
-    console.error('Gemini analysis error:', error);
-    return {
-      isChristianTeaching: true,
-      confidence: 0.7,
-      reason: 'Analysis unavailable',
-      mainThemes: ['Faith', 'Biblical Teaching'],
-      scriptureReferences: ['Matthew 28:19-20']
-    };
+    // Tries official/auto captions. Returns array of {text, offset, duration}
+    const items = await YoutubeTranscript.fetchTranscript(videoId);
+    const full = items.map(i => i.text).join(' ').replace(/\s+/g, ' ').trim();
+    return { ok: true, text: full, items };
+  } catch (err) {
+    console.warn('Transcript fetch failed or unavailable. Falling back:', err?.message || err);
+    return { ok: false, text: '' };
   }
 }
 
-export async function generateBibleStudy(videoTitle, videoDescription, themes, scriptures, options) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-exp' });
+/* --------------------- Schema & Model Helpers ----------------------- */
 
-  // Customize the prompt based on usage type
+const analysisSchema = {
+  type: 'object',
+  properties: {
+    isChristianTeaching: { type: 'boolean' },
+    confidence: { type: 'number' },
+    reason: { type: 'string' },
+    mainThemes: { type: 'array', items: { type: 'string' } },
+    scriptureReferences: { type: 'array', items: { type: 'string' } }
+  },
+  required: ['isChristianTeaching', 'confidence', 'reason', 'mainThemes', 'scriptureReferences']
+};
+
+const daySchema = {
+  type: 'object',
+  properties: {
+    day: { type: 'number' },
+    title: { type: 'string' },
+    passage: { type: 'string' },
+    content: { type: 'string' }
+  },
+  required: ['day', 'title', 'passage', 'content']
+};
+
+const studyArraySchema = {
+  type: 'array',
+  items: daySchema,
+  minItems: 5,
+  maxItems: 5
+};
+
+function getModel() {
+  return genAI.getGenerativeModel({ model: MODEL_NAME });
+}
+
+/* ---------------------- Public API: Analyze ------------------------- */
+/**
+ * Analyze whether a video is Christian teaching, using transcript when available.
+ * @param {string} videoTitle
+ * @param {string} videoDescription
+ * @param {string} [videoId] - Optional YouTube videoId to pull transcript
+ */
+export async function analyzeVideoForBiblicalContent(videoTitle, videoDescription, videoId) {
+  const model = getModel();
+
+  // Try to ground the model with transcript
+  let transcript = '';
+  if (videoId) {
+    const t = await fetchYouTubeTranscript(videoId);
+    if (t.ok) transcript = t.text;
+  }
+
+  // If transcript is long, map-reduce across chunks
+  if (transcript && transcript.length > 4000) {
+    const chunks = chunkText(transcript, 12000, 300);
+
+    // Map: analyze each chunk with a strict JSON schema
+    const partials = [];
+    for (const chunk of chunks) {
+      const res = await model.generateContent({
+        systemInstruction:
+          'You are a conservative, text-grounded biblical content analyzer. Only use the provided transcript.',
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseSchema: analysisSchema
+        },
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text:
+`VIDEO CONTEXT:
+Title: ${videoTitle}
+Description: ${videoDescription}
+
+TRANSCRIPT CHUNK (analyze only what is here):
+${chunk}
+
+Task: Determine if this chunk reflects Christian biblical teaching/sermon content. Extract explicit themes and scripture references mentioned in the text.`
+              }
+            ]
+          }
+        ]
+      });
+
+      const parsed = JSON.parse(res.response.text());
+      partials.push(parsed);
+    }
+
+    // Reduce: merge all partials
+    const isChristianVotes = partials.map(p => p.isChristianTeaching ? 1 : 0);
+    const isChristianTeaching = average(isChristianVotes) >= 0.5;
+    const confidence = average(partials.map(p => p.confidence || 0.7));
+    const reason = 'Aggregated from transcript analysis across chunks.';
+    const mainThemes = unionThemes(partials.map(p => p.mainThemes || []));
+    const scriptureReferences = unionThemes(partials.map(p => p.scriptureReferences || []));
+
+    return { isChristianTeaching, confidence, reason, mainThemes, scriptureReferences };
+  }
+
+  // Fallback: short transcript (or none) — still pass whatever we have
+  const res = await model.generateContent({
+    systemInstruction:
+      'You are a conservative, text-grounded biblical content analyzer. Prefer evidence from transcript; otherwise be cautious.',
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: analysisSchema
+    },
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text:
+`VIDEO CONTEXT
+Title: ${videoTitle}
+Description: ${videoDescription}
+
+${transcript ? `TRANSCRIPT (may be truncated): ${transcript.slice(0, 16000)}` : 'NO TRANSCRIPT AVAILABLE'}
+
+Task: Determine if this is clearly Christian biblical teaching or preaching, extract themes and scripture references only from provided text.`
+          }
+        ]
+      }
+    ]
+  });
+
+  const parsed = JSON.parse(res.response.text());
+  return parsed;
+}
+
+/* ------------------- Public API: Study Generation ------------------- */
+/**
+ * Generate a 5-day study grounded in the sermon transcript and detected themes.
+ * @param {string} videoTitle
+ * @param {string} videoDescription
+ * @param {string[]} themes
+ * @param {string[]} scriptures
+ * @param {object} options
+ * @param {string} [videoId] - Optional YouTube videoId to include transcript evidence
+ */
+export async function generateBibleStudy(videoTitle, videoDescription, themes, scriptures, options, videoId) {
+  const model = getModel();
+
+  // Try to get transcript (best-effort). Even a few thousand chars improves specificity.
+  let transcript = '';
+  if (videoId) {
+    const t = await fetchYouTubeTranscript(videoId);
+    if (t.ok) transcript = t.text;
+  }
+
+  // Trim transcript to a manageable context; the structure/pattern does not need the entire thing.
+  // Prefer a few instructive slices: head, middle, tail.
+  function sliceAround(text, parts = 3, each = 3500) {
+    if (!text) return '';
+    const len = text.length;
+    if (len <= parts * each) return text;
+    const third = Math.floor(len / 3);
+    const head = text.slice(0, each);
+    const middle = text.slice(Math.max(0, third - Math.floor(each / 2)), Math.max(0, third - Math.floor(each / 2)) + each);
+    const tail = text.slice(len - each);
+    return `${head}\n...\n${middle}\n...\n${tail}`;
+  }
+  const transcriptSlices = sliceAround(transcript);
+
+  // Usage profile
   let usageInstructions = '';
   let questionType = 'reflection';
-  
-  switch(options.usageSelection) {
+  switch (options.usageSelection) {
     case 'Personal Study':
-      usageInstructions = `
-This study is for PERSONAL DEVOTIONAL use. Include:
-- Detailed Summary of the Lesson from the focus scripture
-- Deep personal reflection questions
-- "I/my/me" language for introspection
-- Prayer focuses for individual spiritual growth
-- Personal application action steps`;
+      usageInstructions = `Use "I/my/me" language; prayer focuses for individual growth; include personal application.`;
       questionType = 'personal reflection';
       break;
-      
     case 'Small Group':
-      usageInstructions = `
-This study is for SMALL GROUP DISCUSSION. Include:
-- Detailed Summary of the Lesson from the focus scripture
-- Discussion questions that spark conversation
-- "We/us/our" language for community
-- Group activity suggestions
-- Questions with multiple perspectives
-- Prayer focuses for the group`;
+      usageInstructions = `Use "we/us/our" language; include discussion starters and group activities.`;
       questionType = 'group discussion';
       break;
-      
     case 'Family Devotions':
-      usageInstructions = `
-This study is for FAMILY DEVOTIONS. Include:
-- Detailed Summary of the Lesson from the focus scripture
-- Age-appropriate language accessible to children
-- Family-friendly illustrations and examples
-- "Our family" language
-- Questions children can understand and answer
-- Family prayer focuses
-- Simple action steps the whole family can do together`;
+      usageInstructions = `Use family-friendly language; include child-accessible examples and a simple family action.`;
       questionType = 'family discussion';
       break;
-      
     case 'Sharing with Friends':
-      usageInstructions = `
-This study is for SHARING WITH FRIENDS (evangelistic/introductory). Include:
-- Detailed Summary of the Lesson from the focus scripture
-- Accessible language for those new to faith
-- Clear Gospel connections
-- Questions that don't assume Bible knowledge
-- Welcoming and inviting tone
-- Prayer focuses for spiritual seeking`;
+      usageInstructions = `Use accessible, invitational language; connect clearly to the Gospel for newcomers.`;
       questionType = 'exploratory discussion';
+      break;
+    default:
       break;
   }
 
-  const prompt = `
-You are a Christian experienced and expert pastor and Bible study author. Create a detailed 5-day Bible study guide following the EXACT structure below.
+  const includeDeeper = !!options.includeDeeperAnalysis;
+  const includeMemory = !!options.includeMemoryVerses;
+  const includeAction = !!options.includeActionSteps;
+
+  const studyPrompt =
+`You are an experienced pastor and Bible study author. Write a detailed 5-day study grounded ONLY in the provided transcript excerpts and themes.
 
 VIDEO TITLE: ${videoTitle}
-MAIN THEMES: ${themes.join(', ')}
+THEMES: ${themes.join(', ')}
 KEY SCRIPTURES: ${scriptures.join(', ')}
 
 USAGE TYPE: ${options.usageSelection}
-${usageInstructions}
-
+INSTRUCTIONS: ${usageInstructions}
 SESSION LENGTH: ${options.sessionLength}
-${options.includeDeeperAnalysis ? 'INCLUDE: Greek/Hebrew word studies and historical context in each day.' : ''}
-${options.includeMemoryVerses ? 'INCLUDE: One key memory verse for each day.' : ''}
-${options.includeActionSteps ? 'INCLUDE: One specific, practical action step for each day.' : ''}
+${includeDeeper ? 'INCLUDE deeper analysis (Greek/Hebrew & historical context) when relevant.' : ''}
+${includeMemory ? 'INCLUDE one key memory verse each day.' : ''}
+${includeAction ? 'INCLUDE one practical action step each day.' : ''}
 
-CRITICAL INSTRUCTIONS:
-1. Return ONLY valid JSON - no markdown, no code blocks, no extra text
-2. Use \\n\\n for paragraph breaks and \\n for line breaks in content strings
-3. Follow the EXACT structure below for each day
+TRANSCRIPT EXCERPTS (evidence):
+${transcriptSlices || '[Transcript unavailable; use themes/scriptures cautiously.]'}
 
-REQUIRED 5-DAY STRUCTURE:
+OUTPUT RULES:
+- Return ONLY valid JSON (no markdown fences).
+- Use this exact array shape of five objects (days 1–5).
+- Content should be Markdown, but keep it inside JSON strings.
 
-DAY 1: FOUNDATION
-Focus: Introduce the main theme and establish biblical foundation
-Include:
-- Brief introduction (2-3 Paragraphs)
-- Primary scripture passage with context (Be very thorough)
-- 3-4 key theological truths
-- 5 ${questionType} questions
-- Specific prayer focus
-${options.includeMemoryVerses ? '- Memory verse' : ''}
-${options.includeActionSteps ? '- Practical action step' : ''}
-
-DAY 2: BIBLICAL CONTEXT
-Focus: Explore broader scriptural support and background
-Include:
-- How this theme appears throughout Scripture (2-3 Paragraphs)
-- Old and New Testament connections
-- Historical and cultural context
-- 5 ${questionType} questions
-- Prayer focus for wisdom and insight
-${options.includeMemoryVerses ? '- Memory verse' : ''}
-${options.includeActionSteps ? '- Practical action step' : ''}
-
-DAY 3: THEOLOGICAL DEPTH
-Focus: Dive into doctrinal significance and Gospel connections
-Include:
-- How this truth relates to the Gospel (2-3 Paragraphs)
-- Connection to core Christian doctrine
-- Theological implications (Deep Analysis)
-${options.includeDeeperAnalysis ? '- Greek/Hebrew word study' : ''}
-- 5 ${questionType} questions
-- Prayer focus for sound doctrine
-${options.includeMemoryVerses ? '- Memory verse' : ''}
-${options.includeActionSteps ? '- Practical action step' : ''}
-
-DAY 4: PRACTICAL APPLICATION
-Focus: Living out the truth in daily life
-Include:
-- Concrete ways to apply this teaching (Explore deep truths)
-- Real-life scenarios and examples (2-3 Paragraphs)
-- Obstacles to application and how to overcome them
-- 5 ${questionType} questions focused on obedience
-- Prayer focus for transformation
-${options.includeMemoryVerses ? '- Memory verse' : ''}
-${options.includeActionSteps ? '- Practical action step' : ''}
-
-DAY 5: INTEGRATION & RESPONSE
-Focus: Worship, commitment, and moving forward
-Include:
-- Summary of key learnings from the week (Be very detailed)
-- Call to worship and response
-- Long-term life integration
-- 5 ${questionType} questions about commitment
-- Prayer of thanksgiving and dedication
-${options.includeMemoryVerses ? '- Memory verse' : ''}
-${options.includeActionSteps ? '- Practical action step' : ''}
-
-FORMAT EACH DAY'S CONTENT AS MARKDOWN:
-Use this exact structure for each day's "content" field:
-
-# Day [Number]: [Title]\\n\\n## Introduction\\n[2-3 Paragraphs intro]\\n\\n## Scripture Reading: [Reference]\\n[Passage context]\\n\\n## Key Points\\n1. [Point 1]\\n2. [Point 2]\\n3. [Point 3]\\n\\n## ${questionType.charAt(0).toUpperCase() + questionType.slice(1)} Questions\\n1. [Question 1]\\n2. [Question 2]\\n3. [Question 3]\\n4. [Question 4]\\n5. [Question 5]\\n\\n## Prayer Focus\\n[Specific prayer point]${options.includeMemoryVerses ? '\\n\\n## Memory Verse\\n[Verse reference and text]' : ''}${options.includeActionSteps ? '\\n\\n## Action Step\\n[Specific action]' : ''}
-
-RETURN ONLY THIS JSON ARRAY (no markdown, no code blocks):
+ARRAY SHAPE:
 [
-  {
-    "day": 1,
-    "title": "Foundation: [Engaging Title]",
-    "passage": "[Primary Scripture Reference]",
-    "content": "[Full formatted content as described above]"
-  },
-  {
-    "day": 2,
-    "title": "Biblical Context: [Engaging Title]",
-    "passage": "[Scripture Reference]",
-    "content": "[Full formatted content]"
-  },
-  {
-    "day": 3,
-    "title": "Theological Depth: [Engaging Title]",
-    "passage": "[Scripture Reference]",
-    "content": "[Full formatted content]"
-  },
-  {
-    "day": 4,
-    "title": "Practical Application: [Engaging Title]",
-    "passage": "[Scripture Reference]",
-    "content": "[Full formatted content]"
-  },
-  {
-    "day": 5,
-    "title": "Integration & Response: [Engaging Title]",
-    "passage": "[Scripture Reference]",
-    "content": "[Full formatted content]"
-  }
+  {"day":1,"title":"...", "passage":"...", "content":"..."},
+  {"day":2,"title":"...", "passage":"...", "content":"..."},
+  {"day":3,"title":"...", "passage":"...", "content":"..."},
+  {"day":4,"title":"...", "passage":"...", "content":"..."},
+  {"day":5,"title":"...", "passage":"...", "content":"..."}
 ]
-`;
 
-  try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    console.log('Raw study generation response:', text.substring(0, 500));
-    
-    const sanitized = sanitizeJSON(text);
-    
-    if (sanitized) {
-      try {
-        const parsed = JSON.parse(sanitized);
-        
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((study, index) => ({
-            day: study.day || (index + 1),
-            title: study.title || `Day ${index + 1}`,
-            passage: study.passage || 'Scripture Reference',
-            content: study.content || 'Study content'
-          }));
-        }
-      } catch (parseError) {
-        console.error('Study JSON parse error:', parseError);
-      }
-    }
-    
-    // Fallback: generate simple studies
-    console.warn('Could not parse AI-generated studies, using template');
-    return generateFallbackStudies(themes, scriptures, options);
-    
-  } catch (error) {
-    console.error('Gemini generation error:', error);
-    return generateFallbackStudies(themes, scriptures, options);
-  }
-}
-
-// Fallback study generator
-function generateFallbackStudies(themes, scriptures, options) {
-  const days = ['Understanding the Foundation', 'Deeper Exploration', 'Practical Application', 'Living It Out', 'Final Reflections'];
-  
-  return days.map((title, index) => ({
-    day: index + 1,
-    title: title,
-    passage: scriptures[index] || scriptures[0] || 'Matthew 28:19-20',
-    content: `# Day ${index + 1}: ${title}
+CONTENT TEMPLATE INSIDE EACH "content" FIELD:
+# Day [Number]: [Title]
 
 ## Introduction
-Welcome to Day ${index + 1} of your study on ${themes.join(', ')}.
+[2-3 paragraphs]
 
-## Today's Scripture: ${scriptures[index] || scriptures[0] || 'Matthew 28:19-20'}
+## Scripture Reading: [Reference]
+[Context + how the sermon used this.]
 
-Study this passage and reflect on its meaning in your life.
+## Key Points
+1. ...
+2. ...
+3. ...
 
-## ${options.usageSelection === 'Personal Study' ? 'Reflection' : 'Discussion'} Questions
+## ${questionType.charAt(0).toUpperCase() + questionType.slice(1)} Questions
+1. ...
+2. ...
+3. ...
+4. ...
+5. ...
 
-1. What does this passage teach about ${themes[0] || 'faith'}?
-2. How can you apply this to your daily life?
-3. What challenges do you face in living this out?
-4. How does this connect to other biblical teachings?
-5. What action will you take this week?
+## Prayer Focus
+[Specific prayer]
 
-## Prayer Point
-Lord, help me understand and apply Your Word in my life.
+${includeMemory ? '## Memory Verse\n[Reference and text]\n' : ''}${includeAction ? '## Action Step\n[Specific step]\n' : ''}
 
-${options.includeActionSteps ? '\n## Action Step\nChoose one truth from today and put it into practice.\n' : ''}
-${options.includeMemoryVerses ? '\n## Memory Verse\n' + (scriptures[index] || scriptures[0] || 'Matthew 28:19-20') + '\n' : ''}
-`
+Ensure claims are supported by the transcript excerpts when possible.`;
+
+  const res = await model.generateContent({
+    systemInstruction: 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema.',
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: studyArraySchema
+    },
+    contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
+  });
+
+  const parsed = JSON.parse(res.response.text());
+  // Light normalization in case the model misses a field
+  return parsed.map((study, index) => ({
+    day: typeof study.day === 'number' ? study.day : (index + 1),
+    title: study.title || `Day ${index + 1}`,
+    passage: study.passage || (scriptures[index] || scriptures[0] || 'Matthew 28:19-20'),
+    content: study.content || 'Study content'
   }));
 }
