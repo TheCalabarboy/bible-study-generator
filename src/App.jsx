@@ -89,119 +89,121 @@ function App() {
     }
   };
 
-  const generateStudy = async () => {
-    setIsGenerating(true);
-    setValidationError('');
-    
-    try {
-
-     // Track that someone started generating a study
+const generateStudy = async () => {
+  setIsGenerating(true);
+  setValidationError('');
+  
+  try {
+    // Track that someone started generating a study
     logEvent('Study', 'Generate_Started', youtubeLink);
 
-      console.log('Step 1: Validating URL...');
-      if (!validateYouTubeUrl(youtubeLink)) {
-        setValidationError('Please provide a valid YouTube URL.');
-        setIsGenerating(false);
-        return;
-      }
-      
-      console.log('Step 2: Getting video info...');
-      const videoId = extractVideoId(youtubeLink);
-      let videoInfo;
-      
-      try {
-        videoInfo = await getVideoInfo(videoId);
-      } catch (error) {
-        console.log('Could not fetch video metadata, using defaults');
-        videoInfo = {
-          title: `YouTube Sermon (${videoId})`,
-          author: 'Christian Teacher',
-          thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-          duration: 0
-        };
-      }
-      
-      console.log('Video info:', videoInfo);
-      
-      console.log('Step 3: Analyzing content...');
-      const analysis = await analyzeVideoForBiblicalContent(
-        videoInfo.title,
-        `Author: ${videoInfo.author}`
-      );
-      console.log('Analysis result:', analysis);
-
-      // Validate analysis response
-      if (!analysis || typeof analysis !== 'object') {
-        throw new Error('Invalid analysis response from AI');
-      }
-
-      // Provide defaults if AI didn't return expected data
-      const mainThemes = analysis.mainThemes && Array.isArray(analysis.mainThemes) 
-        ? analysis.mainThemes 
-        : ['Faith', 'Scripture Study', 'Christian Living'];
-
-      const scriptureReferences = analysis.scriptureReferences && Array.isArray(analysis.scriptureReferences)
-        ? analysis.scriptureReferences
-        : ['Matthew 28:19-20', 'Romans 12:1-2'];
-
-      const isChristianContent = analysis.isChristianTeaching !== undefined 
-        ? analysis.isChristianTeaching 
-        : true;
-
-      const confidence = analysis.confidence || 0.8;
-
-      console.log('Processed themes:', mainThemes);
-      console.log('Processed scriptures:', scriptureReferences);
-
-      if (!isChristianContent || confidence < 0.6) {
-        setValidationError(
-          'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
-        );
-        setIsGenerating(false);
-        return;
-      }
-
-      console.log('Step 4: Generating study...');
-      const generatedStudies = await generateBibleStudy(
-        videoInfo.title,
-        `Themes: ${mainThemes.join(', ')}`,
-        mainThemes,
-        scriptureReferences,
-        options
-      );
-      console.log('Generated studies:', generatedStudies);
-      
-      if (!generatedStudies || generatedStudies.length === 0) {
-        throw new Error('No studies were generated');
-      }
-      
-      const studiesWithDates = generatedStudies.map((study, index) => ({
-        day: study.day || (index + 1),
-        title: study.title || `Day ${index + 1}`,
-        passage: study.passage || 'Scripture Reference',
-        content: study.content || 'Study content',
-        date: options.startDate 
-          ? new Date(new Date(options.startDate).getTime() + (index * 86400000))
-              .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-          : ''
-      }));
-      
-      console.log('Studies with dates:', studiesWithDates);
-      setDailyStudies(studiesWithDates);
-      // Track successful study generation
-      logEvent('Study', 'Generate_Success', videoInfo.title);
-      setActiveDay(studiesWithDates[0].day); // ensure activeDay matches first available study
-      setStep('result');
-      
-    } catch (error) {
-      console.error('Generation error:', error);
-      setValidationError(
-        error.message || 'An error occurred while generating the study. Please try again.'
-      );
-    } finally {
+    console.log('Step 1: Validating URL...');
+    if (!validateYouTubeUrl(youtubeLink)) {
+      setValidationError('Please provide a valid YouTube URL.');
       setIsGenerating(false);
+      return;
     }
-  };
+    
+    console.log('Step 2: Getting video info...');
+    const videoId = extractVideoId(youtubeLink);
+    let videoInfo;
+    
+    try {
+      videoInfo = await getVideoInfo(videoId);
+    } catch (error) {
+      console.log('Could not fetch video metadata, using defaults');
+      videoInfo = {
+        title: `YouTube Sermon (${videoId})`,
+        author: 'Christian Teacher',
+        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        duration: 0
+      };
+    }
+    
+    console.log('Video info:', videoInfo);
+    
+    console.log('Step 3: Analyzing content...');
+    const analysis = await analyzeVideoForBiblicalContent(
+      videoInfo.title,
+      `Author: ${videoInfo.author}`,
+      videoId // ← NEW: pass videoId so the service can fetch transcript
+    );
+    console.log('Analysis result:', analysis);
+
+    // Validate analysis response
+    if (!analysis || typeof analysis !== 'object') {
+      throw new Error('Invalid analysis response from AI');
+    }
+
+    // Provide defaults if AI didn't return expected data
+    const mainThemes = analysis.mainThemes && Array.isArray(analysis.mainThemes) 
+      ? analysis.mainThemes 
+      : ['Faith', 'Scripture Study', 'Christian Living'];
+
+    const scriptureReferences = analysis.scriptureReferences && Array.isArray(analysis.scriptureReferences)
+      ? analysis.scriptureReferences
+      : ['Matthew 28:19-20', 'Romans 12:1-2'];
+
+    const isChristianContent = analysis.isChristianTeaching !== undefined 
+      ? analysis.isChristianTeaching 
+      : true;
+
+    const confidence = analysis.confidence || 0.8;
+
+    console.log('Processed themes:', mainThemes);
+    console.log('Processed scriptures:', scriptureReferences);
+
+    if (!isChristianContent || confidence < 0.6) {
+      setValidationError(
+        'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
+      );
+      setIsGenerating(false);
+      return;
+    }
+
+    console.log('Step 4: Generating study...');
+    const generatedStudies = await generateBibleStudy(
+      videoInfo.title,
+      `Themes: ${mainThemes.join(', ')}`,
+      mainThemes,
+      scriptureReferences,
+      options,
+      videoId // ← NEW: pass videoId so the service can ground the study in transcript excerpts
+    );
+    console.log('Generated studies:', generatedStudies);
+    
+    if (!generatedStudies || generatedStudies.length === 0) {
+      throw new Error('No studies were generated');
+    }
+    
+    const studiesWithDates = generatedStudies.map((study, index) => ({
+      day: study.day || (index + 1),
+      title: study.title || `Day ${index + 1}`,
+      passage: study.passage || 'Scripture Reference',
+      content: study.content || 'Study content',
+      date: options.startDate 
+        ? new Date(new Date(options.startDate).getTime() + (index * 86400000))
+            .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : ''
+    }));
+    
+    console.log('Studies with dates:', studiesWithDates);
+    setDailyStudies(studiesWithDates);
+    // Track successful study generation
+    logEvent('Study', 'Generate_Success', videoInfo.title);
+    setActiveDay(studiesWithDates[0].day); // ensure activeDay matches first available study
+    setStep('result');
+    
+  } catch (error) {
+    console.error('Generation error:', error);
+    setValidationError(
+      error.message || 'An error occurred while generating the study. Please try again.'
+    );
+  } finally {
+    setIsGenerating(false);
+  }
+};
+
 
 const downloadDayStudy = async (format) => {
   const study = dailyStudies.find(s => s.day === activeDay);

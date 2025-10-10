@@ -20,7 +20,7 @@ function sanitizeJSON(jsonString) {
 }
 
 export async function analyzeVideoForBiblicalContent(videoTitle, videoDescription) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-exp' });
 
   const prompt = `
 You are a biblical content analyzer. Analyze this YouTube video and determine if it's a Christian biblical teaching, sermon, or preaching.
@@ -93,7 +93,7 @@ Be strict - only return isChristianTeaching: true if it's clearly biblical Chris
 }
 
 export async function generateBibleStudy(videoTitle, videoDescription, themes, scriptures, options) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-exp' });
 
   // Customize the prompt based on usage type
   let usageInstructions = '';
