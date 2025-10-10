@@ -103,6 +103,7 @@ export async function generateBibleStudy(videoTitle, videoDescription, themes, s
     case 'Personal Study':
       usageInstructions = `
 This study is for PERSONAL DEVOTIONAL use. Include:
+- Detailed Summary of the Lesson from the focus scripture
 - Deep personal reflection questions
 - "I/my/me" language for introspection
 - Prayer focuses for individual spiritual growth
@@ -113,6 +114,7 @@ This study is for PERSONAL DEVOTIONAL use. Include:
     case 'Small Group':
       usageInstructions = `
 This study is for SMALL GROUP DISCUSSION. Include:
+- Detailed Summary of the Lesson from the focus scripture
 - Discussion questions that spark conversation
 - "We/us/our" language for community
 - Group activity suggestions
@@ -124,6 +126,7 @@ This study is for SMALL GROUP DISCUSSION. Include:
     case 'Family Devotions':
       usageInstructions = `
 This study is for FAMILY DEVOTIONS. Include:
+- Detailed Summary of the Lesson from the focus scripture
 - Age-appropriate language accessible to children
 - Family-friendly illustrations and examples
 - "Our family" language
@@ -136,6 +139,7 @@ This study is for FAMILY DEVOTIONS. Include:
     case 'Sharing with Friends':
       usageInstructions = `
 This study is for SHARING WITH FRIENDS (evangelistic/introductory). Include:
+- Detailed Summary of the Lesson from the focus scripture
 - Accessible language for those new to faith
 - Clear Gospel connections
 - Questions that don't assume Bible knowledge
@@ -146,7 +150,7 @@ This study is for SHARING WITH FRIENDS (evangelistic/introductory). Include:
   }
 
   const prompt = `
-You are a Christian pastor and Bible study author. Create a detailed 5-day Bible study guide following the EXACT structure below.
+You are a Christian experienced and expert pastor and Bible study author. Create a detailed 5-day Bible study guide following the EXACT structure below.
 
 VIDEO TITLE: ${videoTitle}
 MAIN THEMES: ${themes.join(', ')}
@@ -170,8 +174,8 @@ REQUIRED 5-DAY STRUCTURE:
 DAY 1: FOUNDATION
 Focus: Introduce the main theme and establish biblical foundation
 Include:
-- Brief introduction (2-3 sentences)
-- Primary scripture passage with context
+- Brief introduction (2-3 Paragraphs)
+- Primary scripture passage with context (Be very thorough)
 - 3-4 key theological truths
 - 5 ${questionType} questions
 - Specific prayer focus
@@ -181,7 +185,7 @@ ${options.includeActionSteps ? '- Practical action step' : ''}
 DAY 2: BIBLICAL CONTEXT
 Focus: Explore broader scriptural support and background
 Include:
-- How this theme appears throughout Scripture
+- How this theme appears throughout Scripture (2-3 Paragraphs)
 - Old and New Testament connections
 - Historical and cultural context
 - 5 ${questionType} questions
@@ -192,9 +196,9 @@ ${options.includeActionSteps ? '- Practical action step' : ''}
 DAY 3: THEOLOGICAL DEPTH
 Focus: Dive into doctrinal significance and Gospel connections
 Include:
-- How this truth relates to the Gospel
+- How this truth relates to the Gospel (2-3 Paragraphs)
 - Connection to core Christian doctrine
-- Theological implications
+- Theological implications (Deep Analysis)
 ${options.includeDeeperAnalysis ? '- Greek/Hebrew word study' : ''}
 - 5 ${questionType} questions
 - Prayer focus for sound doctrine
@@ -204,8 +208,8 @@ ${options.includeActionSteps ? '- Practical action step' : ''}
 DAY 4: PRACTICAL APPLICATION
 Focus: Living out the truth in daily life
 Include:
-- Concrete ways to apply this teaching
-- Real-life scenarios and examples
+- Concrete ways to apply this teaching (Explore deep truths)
+- Real-life scenarios and examples (2-3 Paragraphs)
 - Obstacles to application and how to overcome them
 - 5 ${questionType} questions focused on obedience
 - Prayer focus for transformation
@@ -215,7 +219,7 @@ ${options.includeActionSteps ? '- Practical action step' : ''}
 DAY 5: INTEGRATION & RESPONSE
 Focus: Worship, commitment, and moving forward
 Include:
-- Summary of key learnings from the week
+- Summary of key learnings from the week (Be very detailed)
 - Call to worship and response
 - Long-term life integration
 - 5 ${questionType} questions about commitment
@@ -226,7 +230,7 @@ ${options.includeActionSteps ? '- Practical action step' : ''}
 FORMAT EACH DAY'S CONTENT AS MARKDOWN:
 Use this exact structure for each day's "content" field:
 
-# Day [Number]: [Title]\\n\\n## Introduction\\n[2-3 sentence intro]\\n\\n## Scripture Reading: [Reference]\\n[Passage context]\\n\\n## Key Points\\n1. [Point 1]\\n2. [Point 2]\\n3. [Point 3]\\n\\n## ${questionType.charAt(0).toUpperCase() + questionType.slice(1)} Questions\\n1. [Question 1]\\n2. [Question 2]\\n3. [Question 3]\\n4. [Question 4]\\n5. [Question 5]\\n\\n## Prayer Focus\\n[Specific prayer point]${options.includeMemoryVerses ? '\\n\\n## Memory Verse\\n[Verse reference and text]' : ''}${options.includeActionSteps ? '\\n\\n## Action Step\\n[Specific action]' : ''}
+# Day [Number]: [Title]\\n\\n## Introduction\\n[2-3 Paragraphs intro]\\n\\n## Scripture Reading: [Reference]\\n[Passage context]\\n\\n## Key Points\\n1. [Point 1]\\n2. [Point 2]\\n3. [Point 3]\\n\\n## ${questionType.charAt(0).toUpperCase() + questionType.slice(1)} Questions\\n1. [Question 1]\\n2. [Question 2]\\n3. [Question 3]\\n4. [Question 4]\\n5. [Question 5]\\n\\n## Prayer Focus\\n[Specific prayer point]${options.includeMemoryVerses ? '\\n\\n## Memory Verse\\n[Verse reference and text]' : ''}${options.includeActionSteps ? '\\n\\n## Action Step\\n[Specific action]' : ''}
 
 RETURN ONLY THIS JSON ARRAY (no markdown, no code blocks):
 [
