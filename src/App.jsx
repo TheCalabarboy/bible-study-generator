@@ -6,6 +6,8 @@ import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/g
 import { extractVideoId, getVideoInfo, validateYouTubeUrl } from './services/youtubeService';
 import Logo from './assets/Logo.png';
 import { logEvent } from './utils/analytics';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 function App() {
   // Temporarily bypass auth to test AI features
@@ -44,6 +46,9 @@ function App() {
 
   // Get current study
   const currentStudy = dailyStudies.length > 0 ? dailyStudies.find(s => s.day === activeDay) : null;
+
+  // Configure marked to produce clean, predictable HTML
+  const renderer = new marked.Renderer();
 
   // Auth handlers
   const handleAuth = async (e) => {
@@ -256,6 +261,59 @@ const downloadDayStudy = async (format) => {
       color: 'white',
       boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
     },
+  };
+
+  // Headings with your styles
+  renderer.heading = (text, level) => {
+    const base = "font-weight: bold; margin: 16px 0 8px 0;";
+    const styles = {
+      1: "font-size: 28px; color: #667eea; margin: 24px 0 12px 0;",
+      2: "font-size: 22px; color: #764ba2; margin: 20px 0 10px 0;",
+      3: "font-size: 18px; color: #333; margin: 16px 0 8px 0;",
+    };
+    const s = styles[level] || base;
+    return `<h${level} style="${s}">${text}</h${level}>`;
+  };
+
+    // Ordered / unordered lists — this guarantees numbering restarts per section
+  renderer.list = (body, ordered) => {
+    const style = 'margin-left: 20px; margin-bottom: 12px;';
+    return ordered
+      ? `<ol style="${style}">${body}</ol>`
+      : `<ul style="${style}">${body}</ul>`;
+  };
+
+  renderer.listitem = (text) => `<li style="margin-bottom: 8px;">${text}</li>`;
+
+  // Strong text style
+  renderer.strong = (text) =>
+    `<strong style="font-weight: bold; color: #333;">${text}</strong>`;
+
+  // Links open safely in a new tab
+  renderer.link = (href, title, text) => {
+    const t = title ? ` title="${title}"` : "";
+    return `<a href="${href}"${t} target="_blank" rel="noopener noreferrer" style="color:#667eea; text-decoration:underline;">${text}</a>`;
+  };
+
+  // Paragraphs with spacing
+  renderer.paragraph = (text) =>
+    `<p style="margin: 12px 0; line-height: 1.8; color: #333;">${text}</p>`;
+
+  // Configure marked
+  marked.setOptions({
+    gfm: true,
+    breaks: false,      // keep Markdown’s default; you’re already writing proper paragraphs
+    headerIds: false,   // avoid auto IDs in headings
+    mangle: false,
+    renderer
+  });
+
+  // New: Markdown → sanitized HTML
+  const renderStudyHTML = (markdown) => {
+    const raw = marked.parse(markdown ?? "");
+    // Sanitize (prevents script injection)
+    const clean = DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+    return clean;
   };
 
   const formatStudyContent = (content) => {
@@ -857,15 +915,15 @@ const downloadDayStudy = async (format) => {
             overflowY: 'auto',
             marginBottom: '32px',
           }}>
-            <div 
-              style={{ 
+           <div
+              style={{
                 color: '#333',
                 fontFamily: 'inherit',
                 lineHeight: '1.8',
                 fontSize: '16px',
               }}
               dangerouslySetInnerHTML={{
-                __html: formatStudyContent(currentStudy.content)
+                __html: renderStudyHTML(currentStudy.content)
               }}
             />
           </div>
