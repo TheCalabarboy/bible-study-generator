@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Logo from '../assets/Logo.png';
+import Navigation from '../components/Navigation';
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(null);
@@ -48,6 +50,8 @@ export default function FAQ() {
   ];
   
   return (
+    <>
+      <Navigation />  {/* ← ADD THIS LINE */}
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -137,7 +141,7 @@ export default function FAQ() {
           <p style={{ color: '#666', marginBottom: '20px' }}>
             We're here to help! Reach out to us anytime.
           </p>
-          <a 
+          <Link 
             href="mailto:contact@sermondive.com"
             style={{
               display: 'inline-block',
@@ -151,11 +155,11 @@ export default function FAQ() {
             }}
           >
             Contact Us
-          </a>
+          </Link>
         </div>
         
         <div style={{ textAlign: 'center', marginTop: '30px' }}>
-          <a 
+          <Link 
             href="/"
             style={{
               color: '#667eea',
@@ -165,9 +169,11 @@ export default function FAQ() {
             }}
           >
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 }

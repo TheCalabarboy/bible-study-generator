@@ -1,8 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Logo from '../assets/Logo.png';
+import Navigation from '../components/Navigation';
 
 export default function About() {
   return (
+    <>
+      <Navigation />  {/* ← ADD THIS LINE */}
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -77,8 +81,8 @@ export default function About() {
         </div>
         
         <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <a 
-            href="/"
+          <Link
+            to="/"
             style={{
               display: 'inline-block',
               padding: '15px 30px',
@@ -91,9 +95,10 @@ export default function About() {
             }}
           >
             Start Your Bible Study
-          </a>
+          </Link>
         </div>
       </div>
     </div>
+    </>
   );
 }

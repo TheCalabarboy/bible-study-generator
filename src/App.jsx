@@ -8,6 +8,7 @@ import Logo from './assets/Logo.png';
 import { logEvent } from './utils/analytics';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import Navigation from './components/Navigation';
 
 function App() {
   // Temporarily bypass auth to test AI features
@@ -331,7 +332,9 @@ const downloadDayStudy = async (format) => {
 
   // LOGIN SCREEN
   if (step === 'login' && !currentUser) {
-    return (
+  return (
+    <>
+      <Navigation />  {/* ← ADD THIS LINE */}
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -447,12 +450,15 @@ const downloadDayStudy = async (format) => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   // INPUT SCREEN
   if (step === 'input') {
     return (
+       <>
+      <Navigation />  {/* ← ADD THIS LINE */}
       <div style={styles.gradientBg}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           {/* Header */}
@@ -728,6 +734,7 @@ const downloadDayStudy = async (format) => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
