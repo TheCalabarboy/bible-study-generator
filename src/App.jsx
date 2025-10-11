@@ -1004,7 +1004,7 @@ const downloadDayStudy = async (format) => {
               marginBottom: '16px',
               fontFamily: "'Proxima Nova', sans-serif"
             }}>
-              📤 Share This Study
+              📤 Share This Website
             </h4>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <a
