@@ -39,6 +39,9 @@ export default function Footer() {
             <Link to="/faq" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
               FAQ
             </Link>
+            <Link to="/privacy" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
+            Privacy Policy
+            </Link>
           </div>
         </div>
         

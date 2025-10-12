@@ -7,6 +7,7 @@ import FAQ from './pages/FAQ.jsx'
 import './index.css'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { initGA } from './utils/analytics'
+import Privacy from './pages/Privacy.jsx'
 
 initGA();
 
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/" element={<App />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/privacy" element={<Privacy />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
