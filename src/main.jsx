@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { RouterProvider } from 'react-router-dom'
+import { router } from './router'
 import App from './App.jsx'
 import About from './pages/About.jsx'
 import FAQ from './pages/FAQ.jsx'
@@ -20,6 +22,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy" element={<Privacy />} />
+          <RouterProvider router={router} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
