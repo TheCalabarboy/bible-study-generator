@@ -16,7 +16,6 @@ export default function Footer() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
         gap: '30px',
       }}>
-        {/* About Section */}
         <div>
           <h3 style={{ color: '#667eea', fontSize: '18px', marginBottom: '15px' }}>
             SermonDive
@@ -26,7 +25,6 @@ export default function Footer() {
           </p>
         </div>
         
-        {/* Quick Links */}
         <div>
           <h3 style={{ color: '#667eea', fontSize: '18px', marginBottom: '15px' }}>
             Quick Links
@@ -44,7 +42,6 @@ export default function Footer() {
           </div>
         </div>
         
-        {/* Contact */}
         <div>
           <h3 style={{ color: '#667eea', fontSize: '18px', marginBottom: '15px' }}>
             Get in Touch
@@ -57,7 +54,6 @@ export default function Footer() {
         </div>
       </div>
       
-      {/* Copyright */}
       <div style={{
         textAlign: 'center',
         marginTop: '40px',

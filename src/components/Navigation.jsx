@@ -29,7 +29,6 @@ export default function Navigation() {
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        {/* Logo */}
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
           <img 
             src={Logo} 
@@ -41,7 +40,6 @@ export default function Navigation() {
           />
         </Link>
         
-        {/* Navigation Links */}
         <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
           {navLinks.map((link) => (
             <Link
@@ -56,16 +54,6 @@ export default function Navigation() {
                 borderRadius: '8px',
                 background: location.pathname === link.path ? '#f8f7ff' : 'transparent',
                 transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (location.pathname !== link.path) {
-                  e.target.style.background = '#f0f0f0';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (location.pathname !== link.path) {
-                  e.target.style.background = 'transparent';
-                }
               }}
             >
               {link.label}
