@@ -30,7 +30,18 @@ export default function BlogListPage() {
           >
             <h3 style={{ margin: '0 0 6px 0', color: '#667eea' }}>{p.title}</h3>
             <p style={{ margin: 0, color: '#666' }}>{p.excerpt}</p>
-          </Link>
+          </Link>,
+
+            <Link 
+            to="/blog/what-to-do-with-sermon-notes" 
+            style={cardStyle}>
+            <h3 style={cardTitle}>What To Do with Sermon Notes</h3>
+            <p style={cardExcerpt}>
+                A simple, Kingdom-shaped rhythm to turn sermon notes into Spirit-led formation.
+            </p>
+            <span style={cardMeta}>7 min read • Practice</span>
+            </Link>
+
         ))}
       </div>
     </div>
