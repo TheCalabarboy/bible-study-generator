@@ -1,11 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Navigation from '../../components/Navigation';
 
 export default function BuildStudyPlan() {
   return (
     <>
-      <Navigation />
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
