@@ -1,13 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../assets/Logo.png';
-import Navigation from '../components/Navigation';
-import Footer from '../components/Footer';
 
 export default function Privacy() {
   return (
     <>
-      <Navigation />
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -513,7 +510,6 @@ export default function Privacy() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }
