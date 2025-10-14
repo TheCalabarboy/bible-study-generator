@@ -20,56 +20,104 @@ export default function About() {
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <img
-            src={Logo}
-            alt="SermonDive"
-            style={{ width: 160, height: 'auto' }}
-          />
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <img src={Logo} alt="SermonDive" style={{ width: 160, height: 'auto' }} />
         </div>
 
         <h1
           style={{
-            fontSize: '48px',
-            color: '#667eea',
+            fontSize: '56px',
+            color: '#7c83ff',
             textAlign: 'center',
-            marginBottom: '24px',
+            marginBottom: 32,
+            lineHeight: 1.1,
           }}
         >
           About SermonDive
         </h1>
 
-        <section style={{ marginBottom: 32 }}>
-          <h2 style={{ color: '#6b21a8', fontSize: 28, marginBottom: 8 }}>
-            Our Mission
-          </h2>
-          <p style={{ color: '#374151', lineHeight: 1.7 }}>
-            SermonDive exists to help Christians grow deeper in their faith by
-            transforming powerful sermons and teachings into structured,
-            Christ-centered study plans you can use every day.
+        {/* Our Mission */}
+        <section style={{ marginBottom: 40 }}>
+          <h2 style={{ color: '#6b21a8', fontSize: 32, marginBottom: 12 }}>Our Mission</h2>
+          <p style={{ color: '#374151', lineHeight: 1.8, fontSize: 18 }}>
+            SermonDive exists to help Christians grow deeper in their faith by transforming powerful
+            sermons into practical, daily Bible study plans. We believe that consistent engagement
+            with God's Word transforms lives.
           </p>
         </section>
 
-        <section style={{ marginBottom: 32 }}>
-          <h2 style={{ color: '#6b21a8', fontSize: 28, marginBottom: 8 }}>
-            What We Do
-          </h2>
-          <ul style={{ color: '#374151', lineHeight: 1.8, paddingLeft: 18 }}>
-            <li>Turn any YouTube sermon into a 5-day study guide.</li>
-            <li>Ground content in Scripture and orthodox Christian doctrine.</li>
-            <li>Offer options for personal study, small groups, or families.</li>
-            <li>Provide downloads (TXT / PDF / Word) for sharing and printing.</li>
+        {/* How It Works */}
+        <section style={{ marginBottom: 40 }}>
+          <h2 style={{ color: '#6b21a8', fontSize: 32, marginBottom: 12 }}>How It Works</h2>
+          <p style={{ color: '#374151', lineHeight: 1.8, fontSize: 18 }}>
+            Simply paste a YouTube link to a Christian sermon or teaching, and our AI-powered platform
+            analyzes the content to create a comprehensive 5-day Bible study guide. Each study includes:
+          </p>
+          <ul style={{ color: '#374151', lineHeight: 1.9, paddingLeft: 22, fontSize: 18 }}>
+            <li>Daily Scripture readings</li>
+            <li>Reflection questions for personal growth</li>
+            <li>Prayer focuses</li>
+            <li>Practical application steps</li>
           </ul>
         </section>
 
-        <section>
-          <h2 style={{ color: '#6b21a8', fontSize: 28, marginBottom: 8 }}>
-            The Center: Jesus
-          </h2>
-          <p style={{ color: '#374151', lineHeight: 1.7 }}>
-            Every plan points to Jesus Christ—His gospel, His kingdom, and His
-            call to follow Him with head, heart, and hands.
+        {/* Our Values */}
+        <section style={{ marginBottom: 40 }}>
+          <h2 style={{ color: '#6b21a8', fontSize: 32, marginBottom: 12 }}>Our Values</h2>
+          <ul style={{ color: '#374151', lineHeight: 1.9, paddingLeft: 22, fontSize: 18 }}>
+            <li>
+              <strong>Scripture-Centered:</strong> The Bible is our ultimate authority
+            </li>
+            <li>
+              <strong>Christ-Focused:</strong> Every study points to Jesus
+            </li>
+            <li>
+              <strong>Theologically Sound:</strong> We maintain orthodox Christian teaching
+            </li>
+            <li>
+              <strong>Practical:</strong> Faith that transforms daily life
+            </li>
+          </ul>
+        </section>
+
+        {/* Who We Serve */}
+        <section style={{ marginBottom: 40 }}>
+          <h2 style={{ color: '#6b21a8', fontSize: 32, marginBottom: 12 }}>Who We Serve</h2>
+          <p style={{ color: '#374151', lineHeight: 1.8, fontSize: 18 }}>
+            SermonDive is designed for individuals seeking deeper Bible study, small groups looking for
+            discussion materials, families wanting to grow together spiritually, and anyone who wants to
+            get more from the sermons they hear.
           </p>
+        </section>
+
+        {/* Contact + CTA */}
+        <section>
+          <h2 style={{ color: '#6b21a8', fontSize: 32, marginBottom: 12 }}>Contact Us</h2>
+          <p style={{ color: '#374151', lineHeight: 1.8, fontSize: 18 }}>
+            Have questions or feedback? We’d love to hear from you at{' '}
+            <a href="mailto:contact@sermondive.com" style={{ color: '#4f46e5', textDecoration: 'underline' }}>
+              contact@sermondive.com
+            </a>.
+          </p>
+
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <a
+              href="/"
+              style={{
+                display: 'inline-block',
+                padding: '16px 28px',
+                borderRadius: 14,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                fontWeight: 700,
+                textDecoration: 'none',
+                fontSize: 18,
+                boxShadow: '0 10px 25px rgba(102,126,234,0.35)',
+              }}
+            >
+              Start Your Bible Study
+            </a>
+          </div>
         </section>
       </div>
     </div>
