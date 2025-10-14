@@ -369,10 +369,10 @@ export default function BuildStudyPlan() {
               Related Articles
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <Link to="/blog/study-bible-with-friends" style={{ color: '#667eea', textDecoration: 'none', fontSize: '18px' }}>
+              <Link to="/blog/practical-ways-study-bible-with-friends" style={{ color: '#667eea', textDecoration: 'none', fontSize: '18px' }}>
                 → Practical Ways to Study the Bible with Friends
               </Link>
-              <Link to="/blog/study-bible-themes" style={{ color: '#667eea', textDecoration: 'none', fontSize: '18px' }}>
+              <Link to="/blog/going-deeper-study-bible-in-themes" style={{ color: '#667eea', textDecoration: 'none', fontSize: '18px' }}>
                 → Going Deeper: Study the Bible in Themes
               </Link>
             </div>

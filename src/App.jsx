@@ -11,6 +11,10 @@ import DOMPurify from 'dompurify';
 import Navigation from './components/Navigation';
 
 function App() {
+  // === AUTH FEATURE TOGGLE ===
+  // Flip to false in the future when you want to enable sign-in.
+  const AUTH_DISABLED = true;
+  
   // Temporarily bypass auth to test AI features
   const currentUser = { email: 'test@example.com' };
   const login = async () => {};
@@ -84,16 +88,13 @@ function App() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setStep('login');
-      setYoutubeLink('');
-      setActiveDay(1);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+ const handleLogout = async () => {
+  // Auth is disabled; just reset UI to the input screen.
+  setStep('input');
+  setYoutubeLink('');
+  setActiveDay(1);
+};
+
 
 const generateStudy = async () => {
   setIsGenerating(true);
@@ -331,7 +332,7 @@ const downloadDayStudy = async (format) => {
   };
 
   // LOGIN SCREEN
-  if (step === 'login' && !currentUser) {
+  if (!AUTH_DISABLED && step === 'login' && !currentUser) {
   return (
     <>
       <Navigation />  {/* ← ADD THIS LINE */}
@@ -765,6 +766,8 @@ const downloadDayStudy = async (format) => {
   }
 
   return (
+    <>
+    <Navigation />  {/* ← ADD THIS LINE */}
     <div style={styles.gradientBg}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Success Banner */}
@@ -1160,6 +1163,8 @@ const downloadDayStudy = async (format) => {
         </div>
       </div>
     </div>
+    <Footer /> 
+    </>
   );
 }
 

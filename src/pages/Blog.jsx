@@ -6,48 +6,7 @@ import Footer from '../components/Footer';
 import { getAllBlogPosts } from '../data/blogData';
 
 export default function Blog() {
-  const blogPosts = [
-    {
-      id: 'build-study-plan-from-sermon',
-      title: 'How to Build a Study Plan from Your Church Sermon',
-      excerpt: 'Transform Sunday sermons into a week of spiritual growth. Learn practical steps to create meaningful Bible study plans that help you apply what you hear.',
-      date: 'October 12, 2025',
-      readTime: '6 min read',
-      category: 'Bible Study Tips'
-    },
-    {
-      id: 'ai-sermon-notes',
-      title: 'What to Do With All Your Sermon Notes',
-      excerpt: 'Discover how AI can help you consolidate years of sermon notes, track your spiritual growth, and create personalized study resources.',
-      date: 'October 11, 2025',
-      readTime: '5 min read',
-      category: 'Technology & Faith'
-    },
-    {
-      id: 'study-bible-with-friends',
-      title: 'Practical Ways to Study the Bible with Friends',
-      excerpt: 'Turn sermon-based studies into meaningful group discussions. Get actionable tips for starting and sustaining a thriving Bible study group.',
-      date: 'October 10, 2025',
-      readTime: '7 min read',
-      category: 'Community'
-    },
-    {
-      id: 'sermon-notes-to-book',
-      title: 'Your Sermon Notes Can Become a Book',
-      excerpt: 'Learn how to compile, organize, and publish your spiritual journey. Turn years of sermon notes into a lasting legacy of faith.',
-      date: 'October 9, 2025',
-      readTime: '8 min read',
-      category: 'Writing & Publishing'
-    },
-    {
-      id: 'study-bible-themes',
-      title: 'Going Deeper: Study the Bible in Themes',
-      excerpt: 'Move beyond individual sermons to thematic Bible study. Explore how connecting multiple teachings reveals deeper biblical truths.',
-      date: 'October 8, 2025',
-      readTime: '6 min read',
-      category: 'Advanced Study'
-    }
-  ];
+  const blogPosts = getAllBlogPosts();
 
   return (
     <>
@@ -57,7 +16,6 @@ export default function Blog() {
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         padding: '40px 20px',
       }}>
-        {/* Header */}
         <div style={{
           maxWidth: '1200px',
           margin: '0 auto 40px',
@@ -82,7 +40,6 @@ export default function Blog() {
           </p>
         </div>
 
-        {/* Blog Posts Grid */}
         <div style={{
           maxWidth: '1200px',
           margin: '0 auto',
@@ -93,28 +50,21 @@ export default function Blog() {
           {blogPosts.map((post) => (
             <Link
               key={post.id}
-              to={`/blog/${post.id}`}
+              to={`/blog/${post.slug}`}
               style={{ textDecoration: 'none' }}
             >
-              <div style={{
-                background: 'white',
-                borderRadius: '16px',
-                padding: '30px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                cursor: 'pointer',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.boxShadow = '0 15px 40px rgba(0,0,0,0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
-              }}
+              <div 
+                className="blog-card"
+                style={{
+                  background: 'white',
+                  borderRadius: '16px',
+                  padding: '30px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                  cursor: 'pointer',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
               >
                 <div style={{
                   display: 'inline-block',
@@ -166,7 +116,6 @@ export default function Blog() {
           ))}
         </div>
 
-        {/* Call to Action */}
         <div style={{
           maxWidth: '800px',
           margin: '60px auto 0',
@@ -200,6 +149,16 @@ export default function Blog() {
         </div>
       </div>
       <Footer />
+      
+      <style>{`
+        .blog-card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .blog-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+      `}</style>
     </>
   );
 }
