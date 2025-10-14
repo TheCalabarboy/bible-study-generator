@@ -76,35 +76,35 @@ export default function BlogListPage() {
   // ---------- posts to show ----------
   const posts = [
     {
-      to: '/blog/build-study-plan-from-church-sermon',
+      to: '/Blog/build-study-plan-from-church-sermon',
       title: 'How to Build a Study Plan from Your Church Sermon',
       excerpt:
         "Turn Sunday's message into a focused, 5-day study you’ll actually do.",
       meta: '6 min • Bible Study Tips',
     },
     {
-      to: '/blog/what-to-do-with-sermon-notes',
+      to: '/Blog/what-to-do-with-sermon-notes',
       title: 'What To Do with Sermon Notes',
       excerpt:
         'A Kingdom-shaped rhythm to move from ink on a page to obedience in your week.',
       meta: '7 min • Practice',
     },
     {
-      to: '/blog/going-deeper-study-bible-in-themes',
+      to: '/Blog/going-deeper-study-bible-in-themes',
       title: 'Going Deeper: Study the Bible in Themes',
       excerpt:
         'Trace big biblical themes to see how the whole story points to Jesus.',
       meta: '5 min • Method',
     },
     {
-      to: '/blog/practical-ways-study-bible-with-friends',
+      to: '/Blog/practical-ways-study-bible-with-friends',
       title: 'Practical Ways to Study the Bible with Friends',
       excerpt:
         'Simple formats that make group study rich, honest, and consistent.',
       meta: '5 min • Community',
     },
        {
-      to: '/blog/your-sermon-notes-can-become-a-book',
+      to: '/Blog/your-sermon-notes-can-become-a-book',
       title: 'Your Sermon Notes can become a Book',
       excerpt:
         'Consistently documenting your thoughts to share with others.',

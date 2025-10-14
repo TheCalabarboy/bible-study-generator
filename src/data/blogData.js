@@ -7,7 +7,11 @@ export const posts = [
     title: 'Build a Study Plan from a Church Sermon',
     excerpt:
       'Turn any Sunday message into a structured 5-day Bible study with Scripture, questions, and prayer.',
-  },
+    date: '2025-10-12',
+    readTime: '6 min read',
+    category: 'Bible Study Tips',
+    published: true,
+    },
   
   {
     slug: 'what-to-do-with-sermon-notes',
@@ -24,18 +28,28 @@ export const posts = [
     title: 'Practical Ways to Study the Bible with Friends',
     excerpt:
       'Make Scripture conversations natural and fruitful with easy formats and weekly rhythms.',
-  },
-  {
-    slug: 'sermon-notes-can-become-book',
-    title: 'Your Sermon Notes Can Become a Book',
-    excerpt:
-      'From raw notes to a short devotional or booklet— outline patterns that actually work.',
-  },
+    date: '2025-10-14',
+    readTime: '4 min read',
+    category: 'Community',
+    published: true,
+    },
+
   {
     slug: 'going-deeper-study-bible-in-themes',
     title: 'Going Deeper: Study the Bible in Themes',
     excerpt:
       'Trace themes across Scripture— covenant, kingdom, presence— to see the big story more clearly.',
+    date: '2025-10-14',
+    readTime: '8 min read',
+    category: 'Theology',
+    published: true,
+    },
+
+  {
+    slug: 'sermon-notes-can-become-book',
+    title: 'Your Sermon Notes Can Become a Book',
+    excerpt:
+      'From raw notes to a short devotional or booklet— outline patterns that actually work.',
   },
 ];
 
