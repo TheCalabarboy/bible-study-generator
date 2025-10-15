@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import heroImg from '../../assets/blog/build-study-plan-hero.png';
 
 export default function BuildStudyPlan() {
   return (
@@ -59,6 +60,22 @@ export default function BuildStudyPlan() {
           }}>
             <span>📅 October 12, 2025</span>
             <span>⏱️ 6 min read</span>
+          </div>
+
+          {/* HERO IMAGE */}
+          <div style={{ margin: '24px 0 36px' }}>
+            <img
+              src={heroImg}
+              alt="Describe the photo clearly for accessibility and SEO"
+              loading="lazy"
+              style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+                borderRadius: '16px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+              }}
+            />
           </div>
 
           {/* Content */}

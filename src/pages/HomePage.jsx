@@ -72,7 +72,7 @@ export default function HomePage() {
                 </p>
             </Link>
 
-          {/* Topic Studies → /topics */}
+          {/* Topical Study → /topics */}
           <Link to="/topics" style={{
             background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)',
             padding: '32px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.2)',
@@ -83,7 +83,7 @@ export default function HomePage() {
           >
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📚</div>
             <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>
-              Topic Studies
+              Topical Study
             </h3>
             <p style={{ fontSize: '14px', opacity: '0.9', color: 'white' }}>
               Enter any biblical topic or doctrine and get a comprehensive Scripture-based study plan.

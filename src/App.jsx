@@ -8,6 +8,7 @@ import Logo from './assets/Logo.png';
 import { logEvent } from './utils/analytics';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import LoadingOverlay from './components/LoadingOverlay';
 
 function App() {
   // === AUTH FEATURE TOGGLE ===
@@ -327,132 +328,139 @@ function App() {
       .replace(/\n/g, '<br/>');
   };
 
+  const overlay = <LoadingOverlay isVisible={isGenerating} message="Preparing your study" />;
+
   // LOGIN SCREEN
   if (!AUTH_DISABLED && step === 'login' && !currentUser) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-      }}>
-        <div style={styles.card}>
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <div style={{ fontSize: '64px', marginBottom: '16px' }}>📖</div>
-            <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#333', marginBottom: '12px' }}>
-              Bible Study Generator
-            </h1>
-            <p style={{ fontSize: '18px', color: '#666' }}>
-              {isSignup ? 'Create your account to begin' : 'Welcome back! Please log in to continue.'}
-            </p>
-          </div>
-
-          <form onSubmit={handleAuth}>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: '#333', fontWeight: 'bold', marginBottom: '8px' }}>
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your.email@example.com"
-                required
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '16px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: '#333', fontWeight: 'bold', marginBottom: '8px' }}>
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '16px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  outline: 'none',
-                }}
-              />
-              <p style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                At least 6 characters
+      <>
+        {overlay}
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+        }}>
+          <div style={styles.card}>
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div style={{ fontSize: '64px', marginBottom: '16px' }}>📖</div>
+              <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#333', marginBottom: '12px' }}>
+                Bible Study Generator
+              </h1>
+              <p style={{ fontSize: '18px', color: '#666' }}>
+                {isSignup ? 'Create your account to begin' : 'Welcome back! Please log in to continue.'}
               </p>
             </div>
 
-            {authError && (
-              <div style={{
-                background: '#fee',
-                color: '#c00',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '16px',
-                fontSize: '14px',
-              }}>
-                {authError}
+            <form onSubmit={handleAuth}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', color: '#333', fontWeight: 'bold', marginBottom: '8px' }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '16px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '8px',
+                    outline: 'none',
+                  }}
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={authLoading}
-              style={{
-                ...styles.button,
-                ...styles.primaryButton,
-                width: '100%',
-                marginTop: '16px',
-                opacity: authLoading ? 0.7 : 1,
-                cursor: authLoading ? 'wait' : 'pointer',
-              }}
-            >
-              {authLoading ? 'Please wait...' : (isSignup ? 'Create Account' : 'Log In')}
-            </button>
-          </form>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', color: '#333', fontWeight: 'bold', marginBottom: '8px' }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '16px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '8px',
+                    outline: 'none',
+                  }}
+                />
+                <p style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                  At least 6 characters
+                </p>
+              </div>
 
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button
-              onClick={() => {
-                setIsSignup(!isSignup);
-                setAuthError('');
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#667eea',
-                fontSize: '16px',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-            >
-              {isSignup ? 'Already have an account? Log in' : 'Need an account? Sign up'}
-            </button>
+              {authError && (
+                <div style={{
+                  background: '#fee',
+                  color: '#c00',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  fontSize: '14px',
+                }}>
+                  {authError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                style={{
+                  ...styles.button,
+                  ...styles.primaryButton,
+                  width: '100%',
+                  marginTop: '16px',
+                  opacity: authLoading ? 0.7 : 1,
+                  cursor: authLoading ? 'wait' : 'pointer',
+                }}
+              >
+                {authLoading ? 'Please wait...' : (isSignup ? 'Create Account' : 'Log In')}
+              </button>
+            </form>
+
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+              <button
+                onClick={() => {
+                  setIsSignup(!isSignup);
+                  setAuthError('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#667eea',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                {isSignup ? 'Already have an account? Log in' : 'Need an account? Sign up'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   // INPUT SCREEN
   if (step === 'input') {
     return (
-      <div style={styles.gradientBg}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <>
+        {overlay}
+        <div style={styles.gradientBg}>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '40px', color: 'white', paddingTop: '40px' }}>
             <div style={{ marginBottom: '16px' }}>
@@ -726,60 +734,65 @@ function App() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   // RESULT SCREEN (fallback debug if no currentStudy)
   if (!currentStudy) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', color: 'white' }}>
-        <h2>Debug Info:</h2>
-        <p>Step: {step}</p>
-        <p>Daily Studies Length: {dailyStudies.length}</p>
-        <p>Active Day: {activeDay}</p>
-        <p>Current Study: {currentStudy ? 'Found' : 'NULL'}</p>
-        <pre style={{ textAlign: 'left', background: 'white', color: 'black', padding: '20px', borderRadius: '8px' }}>
-          {JSON.stringify(dailyStudies, null, 2)}
-        </pre>
-        <button
-          onClick={() => {
-            console.log('Step:', step);
-            console.log('Daily Studies:', dailyStudies);
-            console.log('Active Day:', activeDay);
-          }}
-          style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
-        >
-          Log Debug Info to Console
-        </button>
-      </div>
+      <>
+        {overlay}
+        <div style={{ padding: '40px', textAlign: 'center', color: 'white' }}>
+          <h2>Debug Info:</h2>
+          <p>Step: {step}</p>
+          <p>Daily Studies Length: {dailyStudies.length}</p>
+          <p>Active Day: {activeDay}</p>
+          <p>Current Study: {currentStudy ? 'Found' : 'NULL'}</p>
+          <pre style={{ textAlign: 'left', background: 'white', color: 'black', padding: '20px', borderRadius: '8px' }}>
+            {JSON.stringify(dailyStudies, null, 2)}
+          </pre>
+          <button
+            onClick={() => {
+              console.log('Step:', step);
+              console.log('Daily Studies:', dailyStudies);
+              console.log('Active Day:', activeDay);
+            }}
+            style={{ marginTop: '20px', padding: '10px 20px', fontSize: '16px' }}
+          >
+            Log Debug Info to Console
+          </button>
+        </div>
+      </>
     );
   }
 
   // RESULT SCREEN (normal)
   return (
     <div style={styles.gradientBg}>
+      {overlay}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Success Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          color: 'white',
-          borderRadius: '16px',
-          padding: '24px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)',
-        }}>
-          <span style={{ fontSize: '48px', marginRight: '16px' }}>✅</span>
-          <div>
-            <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
-              5-Day Study Plan Generated!
-            </h2>
-            <p style={{ fontSize: '16px', opacity: '0.9' }}>
-              Click through the tabs to explore each day's generated study
-            </p>
+          {/* Success Banner */}
+          <div style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)',
+          }}>
+            <span style={{ fontSize: '48px', marginRight: '16px' }}>✅</span>
+            <div>
+              <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+                5-Day Study Plan Generated!
+              </h2>
+              <p style={{ fontSize: '16px', opacity: '0.9' }}>
+                Click through the tabs to explore each day's generated study
+              </p>
+            </div>
           </div>
-        </div>
 
         {/* Video & Summary Section */}
         <div style={{

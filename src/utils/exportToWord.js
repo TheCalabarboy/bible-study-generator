@@ -4,9 +4,45 @@ import { saveAs } from 'file-saver';
 export async function exportStudyToWord(studyContent, dayNumber, title) {
   const lines = studyContent.split('\n');
   const children = [];
-  
+  const numberingConfigs = [];
+
+  let numberingSequence = 0;
+  let currentNumberingRef = null;
+
+  const resetNumbering = () => {
+    currentNumberingRef = null;
+  };
+
+  const ensureNumberingRef = () => {
+    if (!currentNumberingRef) {
+      numberingSequence += 1;
+      currentNumberingRef = `number-list-${numberingSequence}`;
+      numberingConfigs.push({
+        reference: currentNumberingRef,
+        levels: [
+          {
+            level: 0,
+            format: 'decimal',
+            text: '%1.',
+            alignment: AlignmentType.LEFT,
+            style: {
+              paragraph: {
+                indent: { left: 720, hanging: 360 },
+              },
+            },
+          },
+        ],
+      });
+    }
+    return currentNumberingRef;
+  };
+
+  const pushParagraph = (paragraph) => {
+    children.push(paragraph);
+  };
+
   // Add title
-  children.push(
+  pushParagraph(
     new Paragraph({
       text: `Day ${dayNumber}: ${title}`,
       heading: HeadingLevel.TITLE,
@@ -14,80 +50,102 @@ export async function exportStudyToWord(studyContent, dayNumber, title) {
       spacing: { after: 400 },
     })
   );
-  
-  lines.forEach((line) => {
-    if (line.startsWith('# ')) {
-      // Main heading
-      children.push(
+
+  lines.forEach((rawLine) => {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      resetNumbering();
+      return;
+    }
+
+    if (trimmed.startsWith('# ')) {
+      resetNumbering();
+      pushParagraph(
         new Paragraph({
-          text: line.replace('# ', ''),
+          text: trimmed.replace('# ', ''),
           heading: HeadingLevel.HEADING_1,
           spacing: { before: 240, after: 120 },
         })
       );
+      return;
     }
-    else if (line.startsWith('## ')) {
-      // Subheading
-      children.push(
+
+    if (trimmed.startsWith('## ')) {
+      resetNumbering();
+      pushParagraph(
         new Paragraph({
-          text: line.replace('## ', ''),
+          text: trimmed.replace('## ', ''),
           heading: HeadingLevel.HEADING_2,
           spacing: { before: 200, after: 100 },
         })
       );
+      return;
     }
-    else if (line.startsWith('### ')) {
-      // Small heading
-      children.push(
+
+    if (trimmed.startsWith('### ')) {
+      resetNumbering();
+      pushParagraph(
         new Paragraph({
-          text: line.replace('### ', ''),
+          text: trimmed.replace('### ', ''),
           heading: HeadingLevel.HEADING_3,
           spacing: { before: 160, after: 80 },
         })
       );
+      return;
     }
-    else if (line.match(/^\*\*(.+)\*\*:?$/)) {
-      // Bold text
-      children.push(
+
+    if (/^\*\*(.+)\*\*:?$/.test(trimmed)) {
+      resetNumbering();
+      const text = trimmed.replace(/\*\*/g, '');
+      pushParagraph(
         new Paragraph({
           children: [
             new TextRun({
-              text: line.replace(/\*\*/g, ''),
+              text,
               bold: true,
               size: 24,
-            })
+            }),
           ],
           spacing: { before: 100, after: 60 },
         })
       );
+      return;
     }
-    else if (line.match(/^\d+\./)) {
-      // Numbered list
-      children.push(
+
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^\d+\.\s*/, '');
+      const reference = ensureNumberingRef();
+      pushParagraph(
         new Paragraph({
-          text: line,
+          text: content,
           numbering: {
-            reference: 'number-numbering',
+            reference,
             level: 0,
           },
           spacing: { before: 60, after: 60 },
         })
       );
+      return;
     }
-    else if (line.startsWith('-') || line.startsWith('•')) {
-      // Bullet points
-      const text = line.replace(/^[-•]\s*/, '');
-      children.push(
+
+    if (/^[-*•]\s+/.test(trimmed)) {
+      resetNumbering();
+      const text = trimmed.replace(/^[-*•]\s*/, '');
+      pushParagraph(
         new Paragraph({
-          text: text,
+          children: [new TextRun({ text })],
           bullet: { level: 0 },
           spacing: { before: 60, after: 60 },
         })
       );
+      return;
     }
-    else if (line.startsWith('---')) {
-      // Separator
-      children.push(
+
+    if (trimmed.startsWith('---')) {
+      resetNumbering();
+      pushParagraph(
         new Paragraph({
           text: '',
           spacing: { before: 120, after: 120 },
@@ -101,35 +159,19 @@ export async function exportStudyToWord(studyContent, dayNumber, title) {
           },
         })
       );
+      return;
     }
-    else if (line.trim() !== '') {
-      // Regular paragraph
-      children.push(
-        new Paragraph({
-          text: line,
-          spacing: { before: 80, after: 80 },
-        })
-      );
-    }
+
+    resetNumbering();
+    pushParagraph(
+      new Paragraph({
+        text: trimmed,
+        spacing: { before: 80, after: 80 },
+      })
+    );
   });
-  
-  // Create document
-  const doc = new Document({
-    numbering: {
-      config: [
-        {
-          reference: 'number-numbering',
-          levels: [
-            {
-              level: 0,
-              format: 'decimal',
-              text: '%1.',
-              alignment: AlignmentType.LEFT,
-            },
-          ],
-        },
-      ],
-    },
+
+  const docConfig = {
     sections: [
       {
         properties: {
@@ -142,12 +184,17 @@ export async function exportStudyToWord(studyContent, dayNumber, title) {
             },
           },
         },
-        children: children,
+        children,
       },
     ],
-  });
-  
-  // Generate and save
+  };
+
+  if (numberingConfigs.length) {
+    docConfig.numbering = { config: numberingConfigs };
+  }
+
+  const doc = new Document(docConfig);
+
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `day-${dayNumber}-study.docx`);
 }
