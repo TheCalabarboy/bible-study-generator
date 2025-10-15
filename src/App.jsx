@@ -202,9 +202,24 @@ function App() {
 
     } catch (error) {
       console.error('Generation error:', error);
-      setValidationError(
-        error.message || 'An error occurred while generating the study. Please try again.'
-      );
+      const message = error?.message || '';
+      const status = typeof error?.status === 'number'
+        ? error.status
+        : (error?.response?.status ||
+          (() => {
+            const match = message.match(/\[(\d{3})\s*\]/);
+            return match ? Number(match[1]) : undefined;
+          })());
+
+      if (status === 503 || message.toLowerCase().includes('overloaded')) {
+        setValidationError('Our servers are pretty hot right now. Please wait a bit and try again.');
+      } else if (status === 429 || message.toLowerCase().includes('rate limit')) {
+        setValidationError('We are handling a lot of requests at the moment. Give it a moment and try again.');
+      } else {
+        setValidationError(
+          message || 'An error occurred while generating the study. Please try again.'
+        );
+      }
     } finally {
       setIsGenerating(false);
     }
