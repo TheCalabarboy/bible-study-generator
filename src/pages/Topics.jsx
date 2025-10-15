@@ -13,6 +13,9 @@ export default function Topics() {
   const [studies, setStudies] = useState([]);
   const hasStudies = studies.length > 0;
   const trimmedTopic = topic.trim();
+  const focusLabel = trimmedTopic.length > 160
+    ? `${trimmedTopic.slice(0, 157)}…`
+    : trimmedTopic;
 
   const renderer = useMemo(() => {
     const customRenderer = new marked.Renderer();
@@ -71,7 +74,10 @@ export default function Topics() {
       return;
     }
 
-    const topicLabel = trimmedTopic || 'Bible Study Plan';
+    const topicLabelRaw = trimmedTopic || 'Bible Study Plan';
+    const topicLabel = topicLabelRaw.length > 80
+      ? `${topicLabelRaw.slice(0, 77)}...`
+      : topicLabelRaw;
     const combinedContent = studies.map((study, index) => {
       const dayNumber = study.day || index + 1;
       const safeTitle = study.title || `Day ${dayNumber}`;
@@ -131,19 +137,46 @@ export default function Topics() {
   async function onSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!topic.trim()) {
-      setError('Please enter a topic (e.g., “Forgiveness”, “Faith and Works”).');
+    if (!trimmedTopic) {
+      setError('Please enter a topic, question, or text to explore.');
       return;
     }
     setIsGenerating(true);
     try {
+      const normalizedInput = trimmedTopic
+        .replace(/\r\n/g, '\n')
+        .replace(/\u00a0/g, ' ')
+        .trim();
+
+      const themeCandidates = Array.from(
+        new Set(
+          normalizedInput
+            .split(/[\n,;:.!?]/)
+            .map((segment) => segment.trim())
+            .filter((segment) => segment.length >= 3)
+        )
+      );
+
+      const topicalThemes = themeCandidates.slice(0, 5);
+      if (topicalThemes.length === 0) {
+        topicalThemes.push(normalizedInput.slice(0, 60) || 'General Study');
+      }
+
+      const titleSeed = topicalThemes[0] || 'User Submission';
+
       // We reuse your study generator without a transcript.
+      const previewSnippet = normalizedInput.length > 600
+        ? `${normalizedInput.slice(0, 600)}…`
+        : normalizedInput;
+
       const studiesArr = await generateBibleStudy(
-        `Topical Study: ${topic}`,
-        `User topic: ${topic}`,
-        [topic],          // themes
-        [],               // scriptures (model will fill)
-        defaultOptions    // options
+        `Topical Study: ${titleSeed}`,
+        `User provided text for analysis. The content from the user is included below verbatim for reference:\n\n${previewSnippet}`,
+        topicalThemes,          // themes
+        [],                     // scriptures (model will fill)
+        defaultOptions,         // options
+        null,                   // videoId
+        normalizedInput         // custom context so the model can ground in user text
       );
       const normalizedStudies = (studiesArr || []).map((study, index) => ({
         day: study.day || index + 1,
@@ -174,28 +207,42 @@ export default function Topics() {
             Topical Study
           </h1>
           <p style={{ color: '#666', marginBottom: 16 }}>
-            Enter any biblical topic or doctrine and we’ll generate a 5-day, theologically grounded study plan.
+            Paste any topic, passage, question, or even a full block of text and we’ll craft a 5-day, theologically grounded study plan.
           </p>
 
-          <form onSubmit={onSubmit} style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-            <input
-              type="text"
+          <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+            <textarea
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., Forgiveness, Holiness, The Fruit of the Spirit…"
+              placeholder="Example: Write a study around 1 Corinthians 12 and the practice of speaking in tongues within the local church..."
+              rows={6}
               style={{
-                flex: 1, padding: 12, fontSize: 16,
-                border: '2px solid #e0e0e0', borderRadius: 8, outline: 'none'
+                width: '100%',
+                padding: 14,
+                fontSize: 16,
+                lineHeight: 1.6,
+                border: '2px solid #e0e0e0',
+                borderRadius: 12,
+                outline: 'none',
+                resize: 'vertical',
+                minHeight: '140px'
               }}
             />
             <button
               type="submit"
               disabled={isGenerating}
               style={{
-                padding: '12px 20px', fontWeight: 700, fontSize: 16,
-                border: 'none', borderRadius: 10, cursor: 'pointer',
+                alignSelf: 'flex-start',
+                padding: '12px 24px',
+                fontWeight: 700,
+                fontSize: 16,
+                border: 'none',
+                borderRadius: 10,
+                cursor: 'pointer',
                 background: isGenerating ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white'
+                color: 'white',
+                boxShadow: '0 10px 25px rgba(102, 126, 234, 0.35)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
               }}
             >
               {isGenerating ? 'Generating…' : 'Generate'}
@@ -217,7 +264,7 @@ export default function Topics() {
                 <p style={{ color: '#6b7280', marginBottom: 20 }}>
                   Focus:{' '}
                   <span style={{ color: '#4c1d95', fontWeight: 700 }}>
-                    {trimmedTopic}
+                    {focusLabel}
                   </span>
                 </p>
               )}

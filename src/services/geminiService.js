@@ -124,7 +124,7 @@ export async function analyzeVideoForBiblicalContent(videoTitle, videoDescriptio
     for (const chunk of chunks) {
       const res = await model.generateContent({
         systemInstruction:
-          'You are a conservative, text-grounded biblical content analyzer. Only use the provided transcript.',
+          'You are a conservative, charismatic, text-grounded biblical content analyzer. Only use the provided transcript.',
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: analysisSchema
@@ -167,7 +167,7 @@ Task: Determine if this chunk reflects Christian biblical teaching/sermon conten
   // Fallback: short transcript (or none) — still pass whatever we have
   const res = await model.generateContent({
     systemInstruction:
-      'You are a conservative, text-grounded biblical content analyzer. Prefer evidence from transcript; otherwise be cautious.',
+      'You are a conservative, charismatic, text-grounded biblical content analyzer. Prefer evidence from transcript; otherwise be cautious.',
     generationConfig: {
       responseMimeType: 'application/json',
       responseSchema: analysisSchema
@@ -307,7 +307,7 @@ MANDATORY MARKDOWN SHAPE FOR EACH "content" FIELD
 # Day [Number]: [Title]
 
 ## Introduction
-[2–3 paragraphs tightly tied to the transcript; avoid fluff.]
+[3–5 paragraphs tightly tied to the transcript; avoid fluff.]
 
 ## Scripture Reading: [Primary Reference]
 [Give immediate context (author/audience/setting), flow of argument, and why the sermon used it.]
