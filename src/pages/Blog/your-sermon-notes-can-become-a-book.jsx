@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import heroImg from '../../assets/blog/sermon-notes-hero.png';
+import heroImg from '../../assets/blog/sermon-notes-book-hero.png';
 
 export default function YourSermonNotesCanBecomeABook() {
   return (
