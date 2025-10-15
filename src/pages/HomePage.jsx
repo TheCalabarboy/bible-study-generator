@@ -53,22 +53,24 @@ export default function HomePage() {
         }}>
 
           {/* Sermon Analysis → /generate */}
-          <Link to="/generate" style={{
-            background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)',
-            padding: '32px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.2)',
-            color: 'white', textDecoration: 'none', transition: 'transform 0.2s'
-          }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎥</div>
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>
-              Sermon Analysis
-            </h3>
-            <p style={{ fontSize: '14px', opacity: '0.9', color: 'white' }}>
-              Paste any YouTube sermon link and our AI analyzes the content to create personalized studies.
-            </p>
-          </Link>
+            <Link 
+            to="/generate" 
+            style={{
+                background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)',
+                padding: '32px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.2)',
+                color: 'white', textDecoration: 'none', transition: 'transform 0.2s'
+            }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎥</div>
+                <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>
+                Sermon Analysis
+                </h3>
+                <p style={{ fontSize: '14px', opacity: '0.9', color: 'white' }}>
+                Paste any YouTube sermon link and our AI analyzes the content to create personalized studies.
+                </p>
+            </Link>
 
           {/* Topic Studies → /topics */}
           <Link to="/topics" style={{

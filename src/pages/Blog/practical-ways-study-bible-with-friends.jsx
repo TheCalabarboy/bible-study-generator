@@ -64,6 +64,22 @@ export default function StudyWithFriends() {
             <span>⏱️ 4 min read</span>
           </div>
 
+            {/* HERO IMAGE */}
+            <div style={{ margin: '24px 0 36px' }}>
+            <img
+                src={heroImg}
+                alt="Describe the photo clearly for accessibility and SEO"
+                loading="lazy"
+                style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+                borderRadius: '16px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                }}
+            />
+            </div>
+
           {/* Content */}
           <div style={{ lineHeight: '1.8', color: '#333', fontSize: '18px' }}>
             <p style={{ marginBottom: '20px', fontSize: '20px', color: '#667eea', fontWeight: 500 }}>
