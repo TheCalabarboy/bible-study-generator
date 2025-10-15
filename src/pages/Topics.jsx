@@ -187,7 +187,15 @@ export default function Topics() {
       setStudies(normalizedStudies);
     } catch (err) {
       console.error(err);
-      setError('Could not generate a study for that topic. Please try again.');
+      const message = (err && err.message) || '';
+      const normalizedMessage = message.toLowerCase();
+      if (err?.status === 503 || normalizedMessage.includes('503') || normalizedMessage.includes('overloaded')) {
+        setError('Our AI partner is momentarily overloaded. Please wait a few seconds and try again.');
+      } else if (err?.status === 429 || normalizedMessage.includes('429') || normalizedMessage.includes('rate limit')) {
+        setError('We are receiving a lot of requests right now. Please retry in a moment.');
+      } else {
+        setError('Could not generate a study for that topic. Please try again.');
+      }
     } finally {
       setIsGenerating(false);
     }

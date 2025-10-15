@@ -98,6 +98,41 @@ function getModel() {
   return genAI.getGenerativeModel({ model: MODEL_NAME });
 }
 
+function extractStatus(err) {
+  if (!err) return undefined;
+  if (typeof err.status === 'number') return err.status;
+  if (err.response?.status) return err.response.status;
+  const message = err.message || '';
+  const match = message.match(/\[(\d{3})\]/);
+  if (match) return Number(match[1]);
+  return undefined;
+}
+
+async function generateWithRetry(model, request, maxAttempts = 3, initialDelay = 800) {
+  let attempt = 0;
+  let delay = initialDelay;
+
+  while (attempt < maxAttempts) {
+    try {
+      return await model.generateContent(request);
+    } catch (err) {
+      const status = extractStatus(err);
+      const retriable = status === 429 || status === 503;
+      attempt += 1;
+
+      if (!retriable || attempt >= maxAttempts) {
+        throw err;
+      }
+
+      console.warn(
+        `Gemini request failed with status ${status}. Retrying in ${delay}ms (attempt ${attempt}/${maxAttempts}).`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      delay *= 2;
+    }
+  }
+}
+
 /* ---------------------- Public API: Analyze ------------------------- */
 /**
  * Analyze whether a video is Christian teaching, using transcript when available.
@@ -122,7 +157,7 @@ export async function analyzeVideoForBiblicalContent(videoTitle, videoDescriptio
 
     const partials = [];
     for (const chunk of chunks) {
-      const res = await model.generateContent({
+      const res = await generateWithRetry(model, {
         systemInstruction:
           'You are a conservative, charismatic, text-grounded biblical content analyzer. Only use the provided transcript.',
         generationConfig: {
@@ -165,7 +200,7 @@ Task: Determine if this chunk reflects Christian biblical teaching/sermon conten
   }
 
   // Fallback: short transcript (or none) — still pass whatever we have
-  const res = await model.generateContent({
+  const res = await generateWithRetry(model, {
     systemInstruction:
       'You are a conservative, charismatic, text-grounded biblical content analyzer. Prefer evidence from transcript; otherwise be cautious.',
     generationConfig: {
@@ -204,13 +239,25 @@ Task: Determine if this is clearly Christian biblical teaching or preaching, ext
  * @param {string[]} scriptures
  * @param {object} options
  * @param {string} [videoId] - Optional YouTube videoId to include transcript evidence
+ * @param {string} [customContext] - Raw user-provided text to ground the study
  */
-export async function generateBibleStudy(videoTitle, videoDescription, themes, scriptures, options, videoId) {
+export async function generateBibleStudy(
+  videoTitle,
+  videoDescription,
+  themes,
+  scriptures,
+  options,
+  videoId,
+  customContext = ''
+) {
   const model = getModel();
 
   // Try to get transcript (best-effort). Even a few thousand chars improves specificity.
   let transcript = '';
-  if (videoId) {
+  if (customContext) {
+    transcript = customContext;
+    console.log('Custom context provided for study generation. Length:', transcript.length);
+  } else if (videoId) {
     const t = await fetchYouTubeTranscript(videoId);
     if (t.ok) transcript = t.text;
   }
@@ -344,7 +391,7 @@ RETURN FORMAT (JSON ONLY; EXACTLY FIVE ITEMS):
 ]
 `.trim();
 
-  const res = await model.generateContent({
+  const res = await generateWithRetry(model, {
     systemInstruction: 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema.',
     generationConfig: {
       responseMimeType: 'application/json',
