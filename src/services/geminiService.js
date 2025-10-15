@@ -7,7 +7,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { YoutubeTranscript } from 'youtube-transcript';
 
-const MODEL_NAME = 'gemini-2.5-pro';
+const MODEL_NAME = 'gemini-2.5-flash';
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 /* ----------------------------- Utilities ----------------------------- */
