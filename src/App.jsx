@@ -8,25 +8,24 @@ import Logo from './assets/Logo.png';
 import { logEvent } from './utils/analytics';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import Navigation from './components/Navigation';
 
 function App() {
   // === AUTH FEATURE TOGGLE ===
   // Flip to false in the future when you want to enable sign-in.
   const AUTH_DISABLED = true;
-  
+
   // Temporarily bypass auth to test AI features
   const currentUser = { email: 'test@example.com' };
   const login = async () => {};
   const signup = async () => {};
   const logout = async () => {};
   // const { currentUser, login, signup, logout } = useAuth();
-  
+
   // Navigation and content states
   const [step, setStep] = useState('input');
   const [youtubeLink, setYoutubeLink] = useState('');
   const [activeDay, setActiveDay] = useState(1);
-  
+
   // Study options
   const [options, setOptions] = useState({
     usageSelection: 'Personal Study',
@@ -36,7 +35,7 @@ function App() {
     includeActionSteps: true,
     includeMemoryVerses: true
   });
-  
+
   // Authentication states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,150 +87,148 @@ function App() {
     }
   };
 
- const handleLogout = async () => {
-  // Auth is disabled; just reset UI to the input screen.
-  setStep('input');
-  setYoutubeLink('');
-  setActiveDay(1);
-};
+  const handleLogout = async () => {
+    // Auth is disabled; just reset UI to the input screen.
+    setStep('input');
+    setYoutubeLink('');
+    setActiveDay(1);
+  };
 
+  const generateStudy = async () => {
+    setIsGenerating(true);
+    setValidationError('');
 
-const generateStudy = async () => {
-  setIsGenerating(true);
-  setValidationError('');
-  
-  try {
-    // Track that someone started generating a study
-    logEvent('Study', 'Generate_Started', youtubeLink);
-
-    console.log('Step 1: Validating URL...');
-    if (!validateYouTubeUrl(youtubeLink)) {
-      setValidationError('Please provide a valid YouTube URL.');
-      setIsGenerating(false);
-      return;
-    }
-    
-    console.log('Step 2: Getting video info...');
-    const videoId = extractVideoId(youtubeLink);
-    let videoInfo;
-    
     try {
-      videoInfo = await getVideoInfo(videoId);
-    } catch (error) {
-      console.log('Could not fetch video metadata, using defaults');
-      videoInfo = {
-        title: `YouTube Sermon (${videoId})`,
-        author: 'Christian Teacher',
-        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-        duration: 0
-      };
-    }
-    
-    console.log('Video info:', videoInfo);
-    
-    console.log('Step 3: Analyzing content...');
-    const analysis = await analyzeVideoForBiblicalContent(
-      videoInfo.title,
-      `Author: ${videoInfo.author}`,
-      videoId // ← NEW: pass videoId so the service can fetch transcript
-    );
-    console.log('Analysis result:', analysis);
+      // Track that someone started generating a study
+      logEvent('Study', 'Generate_Started', youtubeLink);
 
-    // Validate analysis response
-    if (!analysis || typeof analysis !== 'object') {
-      throw new Error('Invalid analysis response from AI');
-    }
+      console.log('Step 1: Validating URL...');
+      if (!validateYouTubeUrl(youtubeLink)) {
+        setValidationError('Please provide a valid YouTube URL.');
+        setIsGenerating(false);
+        return;
+      }
 
-    // Provide defaults if AI didn't return expected data
-    const mainThemes = analysis.mainThemes && Array.isArray(analysis.mainThemes) 
-      ? analysis.mainThemes 
-      : ['Faith', 'Scripture Study', 'Christian Living'];
+      console.log('Step 2: Getting video info...');
+      const videoId = extractVideoId(youtubeLink);
+      let videoInfo;
 
-    const scriptureReferences = analysis.scriptureReferences && Array.isArray(analysis.scriptureReferences)
-      ? analysis.scriptureReferences
-      : ['Matthew 28:19-20', 'Romans 12:1-2'];
+      try {
+        videoInfo = await getVideoInfo(videoId);
+      } catch (error) {
+        console.log('Could not fetch video metadata, using defaults');
+        videoInfo = {
+          title: `YouTube Sermon (${videoId})`,
+          author: 'Christian Teacher',
+          thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+          duration: 0
+        };
+      }
 
-    const isChristianContent = analysis.isChristianTeaching !== undefined 
-      ? analysis.isChristianTeaching 
-      : true;
+      console.log('Video info:', videoInfo);
 
-    const confidence = analysis.confidence || 0.8;
-
-    console.log('Processed themes:', mainThemes);
-    console.log('Processed scriptures:', scriptureReferences);
-
-    if (!isChristianContent || confidence < 0.6) {
-      setValidationError(
-        'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
+      console.log('Step 3: Analyzing content...');
+      const analysis = await analyzeVideoForBiblicalContent(
+        videoInfo.title,
+        `Author: ${videoInfo.author}`,
+        videoId // pass videoId so the service can fetch transcript
       );
+      console.log('Analysis result:', analysis);
+
+      // Validate analysis response
+      if (!analysis || typeof analysis !== 'object') {
+        throw new Error('Invalid analysis response from AI');
+      }
+
+      // Provide defaults if AI didn't return expected data
+      const mainThemes = analysis.mainThemes && Array.isArray(analysis.mainThemes)
+        ? analysis.mainThemes
+        : ['Faith', 'Scripture Study', 'Christian Living'];
+
+      const scriptureReferences = analysis.scriptureReferences && Array.isArray(analysis.scriptureReferences)
+        ? analysis.scriptureReferences
+        : ['Matthew 28:19-20', 'Romans 12:1-2'];
+
+      const isChristianContent = analysis.isChristianTeaching !== undefined
+        ? analysis.isChristianTeaching
+        : true;
+
+      const confidence = analysis.confidence || 0.8;
+
+      console.log('Processed themes:', mainThemes);
+      console.log('Processed scriptures:', scriptureReferences);
+
+      if (!isChristianContent || confidence < 0.6) {
+        setValidationError(
+          'The link you provided does not appear to be a biblical teaching. Please ensure the video is a scriptural teaching or sermon from a credible Christian source and try again.'
+        );
+        setIsGenerating(false);
+        return;
+      }
+
+      console.log('Step 4: Generating study...');
+      const generatedStudies = await generateBibleStudy(
+        videoInfo.title,
+        `Themes: ${mainThemes.join(', ')}`,
+        mainThemes,
+        scriptureReferences,
+        options,
+        videoId // pass videoId so the service can ground the study in transcript excerpts
+      );
+      console.log('Generated studies:', generatedStudies);
+
+      if (!generatedStudies || generatedStudies.length === 0) {
+        throw new Error('No studies were generated');
+      }
+
+      const studiesWithDates = generatedStudies.map((study, index) => ({
+        day: study.day || (index + 1),
+        title: study.title || `Day ${index + 1}`,
+        passage: study.passage || 'Scripture Reference',
+        content: study.content || 'Study content',
+        date: options.startDate
+          ? new Date(new Date(options.startDate).getTime() + (index * 86400000))
+              .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+          : ''
+      }));
+
+      console.log('Studies with dates:', studiesWithDates);
+      setDailyStudies(studiesWithDates);
+      // Track successful study generation
+      logEvent('Study', 'Generate_Success', videoInfo.title);
+      setActiveDay(studiesWithDates[0].day); // ensure activeDay matches first available study
+      setStep('result');
+
+    } catch (error) {
+      console.error('Generation error:', error);
+      setValidationError(
+        error.message || 'An error occurred while generating the study. Please try again.'
+      );
+    } finally {
       setIsGenerating(false);
-      return;
     }
+  };
 
-    console.log('Step 4: Generating study...');
-    const generatedStudies = await generateBibleStudy(
-      videoInfo.title,
-      `Themes: ${mainThemes.join(', ')}`,
-      mainThemes,
-      scriptureReferences,
-      options,
-      videoId // ← NEW: pass videoId so the service can ground the study in transcript excerpts
-    );
-    console.log('Generated studies:', generatedStudies);
-    
-    if (!generatedStudies || generatedStudies.length === 0) {
-      throw new Error('No studies were generated');
+  const downloadDayStudy = async (format) => {
+    const study = dailyStudies.find(s => s.day === activeDay);
+    if (!study) return;
+
+    // Track download event
+    logEvent('Download', `Day_${activeDay}_${format.toUpperCase()}`, study.title);
+
+    if (format === 'txt') {
+      const blob = new Blob([study.content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `day-${activeDay}-study.txt`;
+      a.click();
+    } else if (format === 'pdf') {
+      exportStudyToPDF(study.content, activeDay, study.title);
+    } else if (format === 'word') {
+      await exportStudyToWord(study.content, activeDay, study.title);
     }
-    
-    const studiesWithDates = generatedStudies.map((study, index) => ({
-      day: study.day || (index + 1),
-      title: study.title || `Day ${index + 1}`,
-      passage: study.passage || 'Scripture Reference',
-      content: study.content || 'Study content',
-      date: options.startDate 
-        ? new Date(new Date(options.startDate).getTime() + (index * 86400000))
-            .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-        : ''
-    }));
-    
-    console.log('Studies with dates:', studiesWithDates);
-    setDailyStudies(studiesWithDates);
-    // Track successful study generation
-    logEvent('Study', 'Generate_Success', videoInfo.title);
-    setActiveDay(studiesWithDates[0].day); // ensure activeDay matches first available study
-    setStep('result');
-    
-  } catch (error) {
-    console.error('Generation error:', error);
-    setValidationError(
-      error.message || 'An error occurred while generating the study. Please try again.'
-    );
-  } finally {
-    setIsGenerating(false);
-  }
-};
-
-
-const downloadDayStudy = async (format) => {
-  const study = dailyStudies.find(s => s.day === activeDay);
-  if (!study) return;
-  
-  // Track download event
-  logEvent('Download', `Day_${activeDay}_${format.toUpperCase()}`, study.title);  // ← ADD THIS LINE
-  
-  if (format === 'txt') {
-    const blob = new Blob([study.content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `day-${activeDay}-study.txt`;
-    a.click();
-  } else if (format === 'pdf') {
-    exportStudyToPDF(study.content, activeDay, study.title);
-  } else if (format === 'word') {
-    await exportStudyToWord(study.content, activeDay, study.title);
-  }
-};
+  };
 
   // Reusable styles
   const styles = {
@@ -277,7 +274,7 @@ const downloadDayStudy = async (format) => {
     return `<h${level} style="${s}">${text}</h${level}>`;
   };
 
-    // Ordered / unordered lists — this guarantees numbering restarts per section
+  // Ordered / unordered lists — guarantees numbering restarts per section
   renderer.list = (body, ordered) => {
     const style = 'margin-left: 20px; margin-bottom: 12px;';
     return ordered
@@ -304,16 +301,15 @@ const downloadDayStudy = async (format) => {
   // Configure marked
   marked.setOptions({
     gfm: true,
-    breaks: false,      // keep Markdown’s default; you’re already writing proper paragraphs
-    headerIds: false,   // avoid auto IDs in headings
+    breaks: false,
+    headerIds: false,
     mangle: false,
     renderer
   });
 
-  // New: Markdown → sanitized HTML
+  // Markdown → sanitized HTML
   const renderStudyHTML = (markdown) => {
     const raw = marked.parse(markdown ?? "");
-    // Sanitize (prevents script injection)
     const clean = DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
     return clean;
   };
@@ -333,9 +329,7 @@ const downloadDayStudy = async (format) => {
 
   // LOGIN SCREEN
   if (!AUTH_DISABLED && step === 'login' && !currentUser) {
-  return (
-    <>
-      <Navigation />  {/* ← ADD THIS LINE */}
+    return (
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -414,8 +408,8 @@ const downloadDayStudy = async (format) => {
                 {authError}
               </div>
             )}
-            
-            <button 
+
+            <button
               type="submit"
               disabled={authLoading}
               style={{
@@ -430,7 +424,7 @@ const downloadDayStudy = async (format) => {
               {authLoading ? 'Please wait...' : (isSignup ? 'Create Account' : 'Log In')}
             </button>
           </form>
-          
+
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
             <button
               onClick={() => {
@@ -451,41 +445,38 @@ const downloadDayStudy = async (format) => {
           </div>
         </div>
       </div>
-      </>
     );
   }
 
   // INPUT SCREEN
   if (step === 'input') {
     return (
-       <>
-      <Navigation />  {/* ← ADD THIS LINE */}
       <div style={styles.gradientBg}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '40px', color: 'white', paddingTop: '40px' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <img 
-              src={Logo} 
-              alt="SermonDive Logo" 
-              style={{ 
-                width: '200px', 
-                height: 'auto',
-                margin: '0 auto',
-                display: 'block'
-              }} 
-            />
-          </div>
-            <h1 style={{ 
-              fontSize: '48px', 
-              fontWeight: 'bold', 
+            <div style={{ marginBottom: '16px' }}>
+              <img
+                src={Logo}
+                alt="SermonDive Logo"
+                style={{
+                  width: '200px',
+                  height: 'auto',
+                  margin: '0 auto',
+                  display: 'block'
+                }}
+              />
+            </div>
+            <h1 style={{
+              fontSize: '48px',
+              fontWeight: 'bold',
               marginBottom: '12px',
               fontFamily: "'Proxima Nova', sans-serif"
             }}>
               SermonDive
             </h1>
-            <p style={{ 
-              fontSize: '20px', 
+            <p style={{
+              fontSize: '20px',
               opacity: '0.9',
               fontFamily: "'Poppins', sans-serif"
             }}>
@@ -501,20 +492,20 @@ const downloadDayStudy = async (format) => {
             padding: '40px',
             marginBottom: '24px',
           }}>
-            <label style={{ 
-              display: 'block', 
-              color: '#333', 
-              fontWeight: 'bold', 
+            <label style={{
+              display: 'block',
+              color: '#333',
+              fontWeight: 'bold',
               fontSize: '24px',
-              marginBottom: '16px' 
+              marginBottom: '16px'
             }}>
               🎥 YouTube Link
             </label>
             <p style={{ color: '#666', marginBottom: '16px' }}>
               Enter a YouTube link of a Christian Sermon:
             </p>
-            
-            <input 
+
+            <input
               type="text"
               value={youtubeLink}
               onChange={(e) => setYoutubeLink(e.target.value)}
@@ -532,18 +523,18 @@ const downloadDayStudy = async (format) => {
 
             {/* Options */}
             <div style={{ marginTop: '32px' }}>
-              <label style={{ 
-                display: 'block', 
-                color: '#333', 
-                fontWeight: 'bold', 
+              <label style={{
+                display: 'block',
+                color: '#333',
+                fontWeight: 'bold',
                 fontSize: '18px',
-                marginBottom: '12px' 
+                marginBottom: '12px'
               }}>
                 How would you like this study to be used?
               </label>
               <select
                 value={options.usageSelection}
-                onChange={(e) => setOptions({...options, usageSelection: e.target.value})}
+                onChange={(e) => setOptions({ ...options, usageSelection: e.target.value })}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -561,19 +552,19 @@ const downloadDayStudy = async (format) => {
             </div>
 
             <div style={{ marginTop: '24px' }}>
-              <label style={{ 
-                display: 'block', 
-                color: '#333', 
-                fontWeight: 'bold', 
+              <label style={{
+                display: 'block',
+                color: '#333',
+                fontWeight: 'bold',
                 fontSize: '18px',
-                marginBottom: '12px' 
+                marginBottom: '12px'
               }}>
                 📅 Start Date (Optional)
               </label>
               <input
                 type="date"
                 value={options.startDate}
-                onChange={(e) => setOptions({...options, startDate: e.target.value})}
+                onChange={(e) => setOptions({ ...options, startDate: e.target.value })}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -584,20 +575,20 @@ const downloadDayStudy = async (format) => {
                 }}
               />
             </div>
-            
+
             <div style={{ marginTop: '24px' }}>
-              <label style={{ 
-                display: 'block', 
-                color: '#333', 
-                fontWeight: 'bold', 
+              <label style={{
+                display: 'block',
+                color: '#333',
+                fontWeight: 'bold',
                 fontSize: '18px',
-                marginBottom: '12px' 
+                marginBottom: '12px'
               }}>
                 ⏱️ Session Length
               </label>
               <select
                 value={options.sessionLength}
-                onChange={(e) => setOptions({...options, sessionLength: e.target.value})}
+                onChange={(e) => setOptions({ ...options, sessionLength: e.target.value })}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -615,7 +606,7 @@ const downloadDayStudy = async (format) => {
             </div>
 
             <div style={{ marginTop: '24px' }}>
-              <label style={{ 
+              <label style={{
                 display: 'flex',
                 alignItems: 'center',
                 color: '#333',
@@ -625,7 +616,7 @@ const downloadDayStudy = async (format) => {
                 <input
                   type="checkbox"
                   checked={options.includeDeeperAnalysis}
-                  onChange={(e) => setOptions({...options, includeDeeperAnalysis: e.target.checked})}
+                  onChange={(e) => setOptions({ ...options, includeDeeperAnalysis: e.target.checked })}
                   style={{
                     width: '20px',
                     height: '20px',
@@ -643,7 +634,7 @@ const downloadDayStudy = async (format) => {
             </div>
 
             <div style={{ marginTop: '16px' }}>
-              <label style={{ 
+              <label style={{
                 display: 'flex',
                 alignItems: 'center',
                 color: '#333',
@@ -653,7 +644,7 @@ const downloadDayStudy = async (format) => {
                 <input
                   type="checkbox"
                   checked={options.includeMemoryVerses}
-                  onChange={(e) => setOptions({...options, includeMemoryVerses: e.target.checked})}
+                  onChange={(e) => setOptions({ ...options, includeMemoryVerses: e.target.checked })}
                   style={{
                     width: '20px',
                     height: '20px',
@@ -671,7 +662,7 @@ const downloadDayStudy = async (format) => {
             </div>
 
             <div style={{ marginTop: '16px' }}>
-              <label style={{ 
+              <label style={{
                 display: 'flex',
                 alignItems: 'center',
                 color: '#333',
@@ -681,7 +672,7 @@ const downloadDayStudy = async (format) => {
                 <input
                   type="checkbox"
                   checked={options.includeActionSteps}
-                  onChange={(e) => setOptions({...options, includeActionSteps: e.target.checked})}
+                  onChange={(e) => setOptions({ ...options, includeActionSteps: e.target.checked })}
                   style={{
                     width: '20px',
                     height: '20px',
@@ -698,7 +689,7 @@ const downloadDayStudy = async (format) => {
               </label>
             </div>
 
-            <button 
+            <button
               onClick={generateStudy}
               disabled={!youtubeLink || isGenerating}
               style={{
@@ -735,7 +726,6 @@ const downloadDayStudy = async (format) => {
           </div>
         </div>
       </div>
-      </>
     );
   }
 
@@ -751,7 +741,7 @@ const downloadDayStudy = async (format) => {
         <pre style={{ textAlign: 'left', background: 'white', color: 'black', padding: '20px', borderRadius: '8px' }}>
           {JSON.stringify(dailyStudies, null, 2)}
         </pre>
-        <button 
+        <button
           onClick={() => {
             console.log('Step:', step);
             console.log('Daily Studies:', dailyStudies);
@@ -765,9 +755,8 @@ const downloadDayStudy = async (format) => {
     );
   }
 
+  // RESULT SCREEN (normal)
   return (
-    <>
-    <Navigation />  {/* ← ADD THIS LINE */}
     <div style={styles.gradientBg}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Success Banner */}
@@ -832,23 +821,23 @@ const downloadDayStudy = async (format) => {
             borderRadius: '16px',
             border: '2px solid #e0d4f7'
           }}>
-            <h3 style={{ 
-              fontSize: '24px', 
-              fontWeight: 'bold', 
-              color: '#667eea', 
+            <h3 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#667eea',
               marginBottom: '16px',
               fontFamily: "'Proxima Nova', sans-serif"
             }}>
               📝 Sermon Summary
             </h3>
-            <p style={{ 
-              fontSize: '16px', 
-              lineHeight: '1.8', 
+            <p style={{
+              fontSize: '16px',
+              lineHeight: '1.8',
               color: '#333',
               fontFamily: "'Poppins', sans-serif"
             }}>
-              This sermon explores the themes of {dailyStudies[0]?.passage || 'biblical teaching'} and 
-              focuses on spiritual growth through {dailyStudies[0]?.title?.toLowerCase() || 'faith and perseverance'}. 
+              This sermon explores the themes of {dailyStudies[0]?.passage || 'biblical teaching'} and
+              focuses on spiritual growth through {dailyStudies[0]?.title?.toLowerCase() || 'faith and perseverance'}.
               The teaching emphasizes practical application and deep scriptural understanding.
             </p>
           </div>
@@ -925,7 +914,7 @@ const downloadDayStudy = async (format) => {
             overflowY: 'auto',
             marginBottom: '32px',
           }}>
-           <div
+            <div
               style={{
                 color: '#333',
                 fontFamily: 'inherit',
@@ -939,13 +928,13 @@ const downloadDayStudy = async (format) => {
           </div>
 
           {/* Download Buttons */}
-          <div style={{ 
-            display: 'grid', 
+          <div style={{
+            display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '12px',
             marginBottom: '24px',
           }}>
-            <button 
+            <button
               onClick={() => downloadDayStudy('txt')}
               style={{
                 padding: '16px',
@@ -963,7 +952,7 @@ const downloadDayStudy = async (format) => {
               📄 Download Text
             </button>
 
-            <button 
+            <button
               onClick={() => downloadDayStudy('pdf')}
               style={{
                 padding: '16px',
@@ -981,7 +970,7 @@ const downloadDayStudy = async (format) => {
               📕 Download PDF
             </button>
 
-            <button 
+            <button
               onClick={() => downloadDayStudy('word')}
               style={{
                 padding: '16px',
@@ -1008,9 +997,9 @@ const downloadDayStudy = async (format) => {
             borderRadius: '16px',
             textAlign: 'center'
           }}>
-            <h4 style={{ 
-              fontSize: '18px', 
-              fontWeight: 'bold', 
+            <h4 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
               marginBottom: '16px',
               fontFamily: "'Proxima Nova', sans-serif"
             }}>
@@ -1032,7 +1021,7 @@ const downloadDayStudy = async (format) => {
               >
                 📧 Email
               </a>
-              
+
               <a
                 href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Check out this 5-Day Bible Study!')}&url=${encodeURIComponent(window.location.href)}`}
                 target="_blank"
@@ -1050,7 +1039,7 @@ const downloadDayStudy = async (format) => {
               >
                 🐦 Twitter
               </a>
-              
+
               <a
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
                 target="_blank"
@@ -1068,7 +1057,7 @@ const downloadDayStudy = async (format) => {
               >
                 📘 Facebook
               </a>
-              
+
               <a
                 href={`https://wa.me/?text=${encodeURIComponent('Check out this 5-Day Bible Study: ' + window.location.href)}`}
                 target="_blank"
@@ -1090,15 +1079,17 @@ const downloadDayStudy = async (format) => {
           </div>
 
           {/* Navigation Buttons */}
-          <div style={{ 
-            display: 'grid', 
+          <div style={{
+            display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
             gap: '16px',
             marginTop: '24px'
           }}>
-            <button 
-              onClick={() => {setActiveDay(Math.max(1, activeDay - 1))
-              logEvent('Navigation', 'Previous_Day', `Day ${activeDay - 1}`);}}
+            <button
+              onClick={() => {
+                setActiveDay(Math.max(1, activeDay - 1));
+                logEvent('Navigation', 'Previous_Day', `Day ${activeDay - 1}`);
+              }}
               disabled={activeDay === 1}
               style={{
                 padding: '16px',
@@ -1116,7 +1107,7 @@ const downloadDayStudy = async (format) => {
               ← Previous Day
             </button>
 
-            <button 
+            <button
               onClick={() => {
                 logEvent('Navigation', 'New_Study', 'From Results Page');
                 setStep('input');
@@ -1140,9 +1131,11 @@ const downloadDayStudy = async (format) => {
               🔄 New Study
             </button>
 
-            <button 
-              onClick={() => {setActiveDay(Math.min(dailyStudies.length, activeDay + 1))
-              logEvent('Navigation', 'Next_Day', `Day ${activeDay + 1}`);}}
+            <button
+              onClick={() => {
+                setActiveDay(Math.min(dailyStudies.length, activeDay + 1));
+                logEvent('Navigation', 'Next_Day', `Day ${activeDay + 1}`);
+              }}
               disabled={activeDay === dailyStudies.length}
               style={{
                 padding: '16px',
@@ -1163,8 +1156,6 @@ const downloadDayStudy = async (format) => {
         </div>
       </div>
     </div>
-    <Footer /> 
-    </>
   );
 }
 

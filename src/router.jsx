@@ -11,10 +11,13 @@ import ThematicStudy from './pages/Blog/going-deeper-study-bible-in-themes';
 
 // (optional) generic fallback for slugs not covered by static pages
 import Post from './pages/Blog/Post';
-
 import About from './pages/About';
 import FAQ from './pages/FAQ';
 import Privacy from './pages/Privacy';
+
+// Generator pages
+import Generate from './pages/Generate';
+import Topics from './pages/Topics';
 
 const NotFound = () => (
   <div style={{ padding: 40 }}>Page not found. <a href="/">Go Home</a></div>
@@ -26,6 +29,11 @@ export const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { index: true, element: <HomePage /> },
+
+      // generator routes
+      { path: 'generate', element: <Generate /> },
+      { path: 'topics', element: <Topics /> },
+
       { path: 'about', element: <About /> },
       { path: 'faq', element: <FAQ /> },
       { path: 'privacy', element: <Privacy /> },
