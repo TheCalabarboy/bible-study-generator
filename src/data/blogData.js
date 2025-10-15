@@ -46,10 +46,14 @@ export const posts = [
     },
 
   {
-    slug: 'sermon-notes-can-become-book',
+    slug: 'your-sermon-notes-can-become-a-book',
     title: 'Your Sermon Notes Can Become a Book',
     excerpt:
-      'From raw notes to a short devotional or booklet— outline patterns that actually work.',
+      'Discern God’s call, mine your archives, and steward years of preaching into a faithful manuscript.',
+    date: '2025-10-21',
+    readTime: '10 min read',
+    category: 'Writing & Ministry',
+    published: true,
   },
 ];
 

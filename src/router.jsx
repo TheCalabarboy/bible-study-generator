@@ -8,6 +8,7 @@ import BuildStudyPlan from './pages/Blog/build-study-plan-from-church-sermon';
 import SermonNotes from './pages/Blog/what-to-do-with-sermon-notes';
 import StudyWithFriends from './pages/Blog/practical-ways-study-bible-with-friends.jsx';
 import ThematicStudy from './pages/Blog/going-deeper-study-bible-in-themes';
+import SermonNotesBook from './pages/Blog/your-sermon-notes-can-become-a-book.jsx';
 
 // (optional) generic fallback for slugs not covered by static pages
 import Post from './pages/Blog/Post';
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
           { path: 'what-to-do-with-sermon-notes', element: <SermonNotes /> },
           { path: 'practical-ways-study-bible-with-friends', element: <StudyWithFriends /> },
           { path: 'going-deeper-study-bible-in-themes', element: <ThematicStudy /> },
+          { path: 'your-sermon-notes-can-become-a-book', element: <SermonNotesBook /> },
 
           // FALLBACK for any other slugs (reads from blogData.js)
           { path: ':slug', element: <Post /> },
