@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { linkScriptureReferences } from '../utils/linkScriptureReferences';
 import { generateBibleStudy } from '../services/geminiService';
 import { exportStudyToPDF } from '../utils/exportToPDF';
 import { exportStudyToWord } from '../utils/exportToWord';
@@ -16,6 +17,7 @@ export default function Topics() {
   const focusLabel = trimmedTopic.length > 160
     ? `${trimmedTopic.slice(0, 157)}…`
     : trimmedTopic;
+  const pageRef = useRef(null);
 
   const renderer = useMemo(() => {
     const customRenderer = new marked.Renderer();
@@ -64,8 +66,27 @@ export default function Topics() {
     });
   }, [renderer]);
 
+  useEffect(() => {
+    const container = pageRef.current;
+    if (!container) return;
+
+    const handleClick = (event) => {
+      const anchor = event.target.closest('a[data-scripture-link="true"]');
+      if (anchor && container.contains(anchor)) {
+        event.preventDefault();
+        window.open(anchor.href, 'scriptureReference', 'width=600,height=700,noopener');
+      }
+    };
+
+    container.addEventListener('click', handleClick);
+    return () => {
+      container.removeEventListener('click', handleClick);
+    };
+  }, [hasStudies, studies]);
+
   const renderStudyHTML = useCallback((markdown) => {
-    const raw = marked.parse(markdown ?? '');
+    const withLinks = linkScriptureReferences(markdown ?? '');
+    const raw = marked.parse(withLinks);
     return DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
   }, [renderer]);
 
@@ -204,7 +225,9 @@ export default function Topics() {
   return (
     <>
       <LoadingOverlay isVisible={isGenerating} />
-      <div style={{ minHeight: 'calc(100vh - 200px)', padding: '40px 20px',
+      <div
+        ref={pageRef}
+        style={{ minHeight: 'calc(100vh - 200px)', padding: '40px 20px',
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
         <div style={{
           maxWidth: 900, margin: '0 auto',

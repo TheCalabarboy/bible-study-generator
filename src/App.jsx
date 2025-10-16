@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 // import { useAuth } from './contexts/AuthContext'; // (unused while auth bypass is active)
 import { exportStudyToPDF } from './utils/exportToPDF';
 import { exportStudyToWord } from './utils/exportToWord';
@@ -8,6 +8,7 @@ import Logo from './assets/Logo.png';
 import { logEvent } from './utils/analytics';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { linkScriptureReferences } from './utils/linkScriptureReferences';
 import LoadingOverlay from './components/LoadingOverlay';
 
 function App() {
@@ -325,7 +326,8 @@ function App() {
 
   // Markdown → sanitized HTML
   const renderStudyHTML = (markdown) => {
-    const raw = marked.parse(markdown ?? "");
+    const withLinks = linkScriptureReferences(markdown ?? "");
+    const raw = marked.parse(withLinks);
     const clean = DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
     return clean;
   };
@@ -344,6 +346,25 @@ function App() {
   };
 
   const overlay = <LoadingOverlay isVisible={isGenerating} message="Preparing your study" />;
+  const studyContentRef = useRef(null);
+
+  useEffect(() => {
+    const container = studyContentRef.current;
+    if (!container) return;
+
+    const handleClick = (event) => {
+      const anchor = event.target.closest('a[data-scripture-link="true"]');
+      if (anchor && container.contains(anchor)) {
+        event.preventDefault();
+        window.open(anchor.href, 'scriptureReference', 'width=600,height=700,noopener');
+      }
+    };
+
+    container.addEventListener('click', handleClick);
+    return () => {
+      container.removeEventListener('click', handleClick);
+    };
+  }, [currentStudy]);
 
   // LOGIN SCREEN
   if (!AUTH_DISABLED && step === 'login' && !currentUser) {
@@ -941,7 +962,8 @@ function App() {
             maxHeight: '500px',
             overflowY: 'auto',
             marginBottom: '32px',
-          }}>
+          }}
+          ref={studyContentRef}>
             <div
               style={{
                 color: '#333',
