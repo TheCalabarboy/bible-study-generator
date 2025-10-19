@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 // import { useAuth } from './contexts/AuthContext'; // (unused while auth bypass is active)
-import { exportStudyToPDF } from './utils/exportToPDF';
 import { exportStudyToWord } from './utils/exportToWord';
 import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/geminiService';
 import { extractVideoId, getVideoInfo, validateYouTubeUrl } from './services/youtubeService';
@@ -9,6 +8,7 @@ import { logEvent } from './utils/analytics';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { linkScriptureReferences } from './utils/linkScriptureReferences';
+import { normalizeStudyMarkdown } from './utils/normalizeStudyMarkdown';
 import LoadingOverlay from './components/LoadingOverlay';
 
 function App() {
@@ -53,8 +53,42 @@ function App() {
   // Get current study
   const currentStudy = dailyStudies.length > 0 ? dailyStudies.find(s => s.day === activeDay) : null;
 
-  // Configure marked to produce clean, predictable HTML
+  // === Configure marked to produce clean, predictable HTML ===
+  // Build from the stock renderer so nested markdown remains intact.
   const renderer = new marked.Renderer();
+
+  renderer.heading = function heading(text, level) {
+    const styles = {
+      1: 'font-size: 28px; color: #667eea; margin: 24px 0 12px 0; font-weight: bold;',
+      2: 'font-size: 22px; color: #764ba2; margin: 20px 0 10px 0; font-weight: bold;',
+      3: 'font-size: 18px; color: #333; margin: 16px 0 8px 0; font-weight: bold;',
+    };
+    const style = styles[level] || 'font-weight: bold; margin: 16px 0 8px 0;';
+    return `<h${level} style="${style}">${text}</h${level}>\n`;
+  };
+
+  renderer.list = function list(body, ordered) {
+    const tag = ordered ? 'ol' : 'ul';
+    const style = 'margin-left: 20px; margin-bottom: 12px;';
+    return `<${tag} style="${style}">\n${body}</${tag}>\n`;
+  };
+
+  renderer.listitem = function listitem(text) {
+    return `<li style="margin-bottom: 8px;">${text}</li>\n`;
+  };
+
+  renderer.strong = function strong(text) {
+    return `<strong style="font-weight:bold; color:#333;">${text}</strong>`;
+  };
+
+  renderer.link = function link(href, title, text) {
+    const titleAttr = title ? ` title="${title}"` : '';
+    return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" style="color:#667eea; text-decoration:underline;">${text}</a>`;
+  };
+
+  renderer.paragraph = function paragraph(text) {
+    return `<p style="margin:12px 0; line-height:1.8; color:#333;">${text}</p>\n`;
+  };
 
   // Auth handlers
   const handleAuth = async (e) => {
@@ -227,24 +261,57 @@ function App() {
   };
 
   const downloadDayStudy = async (format) => {
-    const study = dailyStudies.find(s => s.day === activeDay);
+    const study = dailyStudies.find((s) => s.day === activeDay);
     if (!study) return;
 
-    // Track download event
-    logEvent('Download', `Day_${activeDay}_${format.toUpperCase()}`, study.title);
-
     if (format === 'txt') {
-      const blob = new Blob([study.content], { type: 'text/plain' });
+      const normalizedContent = normalizeStudyMarkdown(study.content || '');
+      const blob = new Blob([normalizedContent], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `day-${activeDay}-study.txt`;
       a.click();
-    } else if (format === 'pdf') {
-      exportStudyToPDF(study.content, activeDay, study.title);
     } else if (format === 'word') {
-      await exportStudyToWord(study.content, activeDay, study.title);
+      // Pass raw content - exportStudyToWord will handle normalization
+      await exportStudyToWord(study.content, activeDay, study.title, null, study.passage);
+    } else {
+      return;
     }
+
+    logEvent('Download', `Day_${activeDay}_${format.toUpperCase()}`, study.title);
+  };
+
+  const downloadFullStudy = async () => {
+    if (!dailyStudies.length) return;
+
+    const combinedContent = dailyStudies
+      .map((study, index) => {
+        const dayNumber = study.day || index + 1;
+        const title = study.title || `Day ${dayNumber}`;
+        const passageLine = study.passage ? `**Key Passage:** ${study.passage}\n\n` : '';
+        const content = study.content || '';  // Pass raw content without normalization
+        return `# Day ${dayNumber}: ${title}\n\n${passageLine}${content}`;
+      })
+      .join('\n\n---\n\n');
+
+    const baseTitle = dailyStudies[0]?.title || 'Full Study Guide';
+    const slugify = (value) =>
+      (value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'study-guide';
+    const filenameBase = slugify(baseTitle);
+
+    await exportStudyToWord(
+      combinedContent,
+      null,
+      `Full Study Guide`,
+      `${filenameBase}-full-study.docx`,
+      null  // No passage for full study
+    );
+
+    logEvent('Download', 'Full_WORD', baseTitle);
   };
 
   // Reusable styles
@@ -279,70 +346,26 @@ function App() {
     },
   };
 
-  // Headings with your styles
-  renderer.heading = (text, level) => {
-    const base = "font-weight: bold; margin: 16px 0 8px 0;";
-    const styles = {
-      1: "font-size: 28px; color: #667eea; margin: 24px 0 12px 0;",
-      2: "font-size: 22px; color: #764ba2; margin: 20px 0 10px 0;",
-      3: "font-size: 18px; color: #333; margin: 16px 0 8px 0;",
-    };
-    const s = styles[level] || base;
-    return `<h${level} style="${s}">${text}</h${level}>`;
-  };
-
-  // Ordered / unordered lists — guarantees numbering restarts per section
-  renderer.list = (body, ordered) => {
-    const style = 'margin-left: 20px; margin-bottom: 12px;';
-    return ordered
-      ? `<ol style="${style}">${body}</ol>`
-      : `<ul style="${style}">${body}</ul>`;
-  };
-
-  renderer.listitem = (text) => `<li style="margin-bottom: 8px;">${text}</li>`;
-
-  // Strong text style
-  renderer.strong = (text) =>
-    `<strong style="font-weight: bold; color: #333;">${text}</strong>`;
-
-  // Links open safely in a new tab
-  renderer.link = (href, title, text) => {
-    const t = title ? ` title="${title}"` : "";
-    return `<a href="${href}"${t} target="_blank" rel="noopener noreferrer" style="color:#667eea; text-decoration:underline;">${text}</a>`;
-  };
-
-  // Paragraphs with spacing
-  renderer.paragraph = (text) =>
-    `<p style="margin: 12px 0; line-height: 1.8; color: #333;">${text}</p>`;
-
-  // Configure marked
-  marked.setOptions({
+  // Register the renderer and other options via marked.use()
+  marked.use({
+    renderer,
     gfm: true,
     breaks: false,
     headerIds: false,
-    mangle: false,
-    renderer
+    mangle: false
   });
 
   // Markdown → sanitized HTML
   const renderStudyHTML = (markdown) => {
-    const withLinks = linkScriptureReferences(markdown ?? "");
-    const raw = marked.parse(withLinks);
-    const clean = DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+    const normalized = normalizeStudyMarkdown(markdown ?? '');
+    const raw = marked.parse(normalized);
+    const withLinks = linkScriptureReferences(raw);
+    const clean = DOMPurify.sanitize(withLinks, {
+      ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'a', 'span', 'div'],
+      ALLOWED_ATTR: ['style', 'href', 'title', 'target', 'rel', 'data-scripture-link'],
+      ALLOW_DATA_ATTR: true
+    });
     return clean;
-  };
-
-  const formatStudyContent = (content) => {
-    return content
-      .replace(/^# (.+)$/gm, '<h1 style="font-size: 28px; font-weight: bold; color: #667eea; margin: 24px 0 12px 0;">$1</h1>')
-      .replace(/^## (.+)$/gm, '<h2 style="font-size: 22px; font-weight: bold; color: #764ba2; margin: 20px 0 10px 0;">$1</h2>')
-      .replace(/^### (.+)$/gm, '<h3 style="font-size: 18px; font-weight: bold; color: #333; margin: 16px 0 8px 0;">$1</h3>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: bold; color: #333;">$1</strong>')
-      .replace(/^- (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px;">$1</li>')
-      .replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 8px; list-style-type: decimal;">$1</li>')
-      .replace(/\n\n/g, '</p><p style="margin: 12px 0;">')
-      .replace(/^(?!<[hl]|<li)/gm, '<p style="margin: 12px 0;">')
-      .replace(/\n/g, '<br/>');
   };
 
   const overlay = <LoadingOverlay isVisible={isGenerating} message="Preparing your study" />;
@@ -1003,24 +1026,6 @@ function App() {
             </button>
 
             <button
-              onClick={() => downloadDayStudy('pdf')}
-              style={{
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-                transition: 'transform 0.3s ease',
-              }}
-            >
-              📕 Download PDF
-            </button>
-
-            <button
               onClick={() => downloadDayStudy('word')}
               style={{
                 padding: '16px',
@@ -1036,6 +1041,26 @@ function App() {
               }}
             >
               📘 Download Word
+            </button>
+          </div>
+
+          <div style={{ marginBottom: '32px' }}>
+            <button
+              onClick={downloadFullStudy}
+              style={{
+                padding: '16px 24px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                border: 'none',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                color: 'white',
+                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.35)',
+                transition: 'transform 0.3s ease',
+              }}
+            >
+              📘 Download Full Study (Word)
             </button>
           </div>
 

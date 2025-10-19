@@ -34,7 +34,7 @@ export default function FAQ() {
     {
       question: 'Can I download my studies?',
       answer:
-        'Absolutely! Each daily study can be downloaded as a text file, PDF, or Word document for easy printing and sharing.',
+        'Absolutely! Each daily study can be downloaded as a text file or Word document for easy printing and sharing.',
     },
     {
       question: 'Is this theologically sound?',

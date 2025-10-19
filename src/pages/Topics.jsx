@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { linkScriptureReferences } from '../utils/linkScriptureReferences';
+import { normalizeStudyMarkdown } from '../utils/normalizeStudyMarkdown';
 import { generateBibleStudy } from '../services/geminiService';
-import { exportStudyToPDF } from '../utils/exportToPDF';
 import { exportStudyToWord } from '../utils/exportToWord';
 import LoadingOverlay from '../components/LoadingOverlay';
 
@@ -85,12 +85,13 @@ export default function Topics() {
   }, [hasStudies, studies]);
 
   const renderStudyHTML = useCallback((markdown) => {
-    const withLinks = linkScriptureReferences(markdown ?? '');
+    const normalized = normalizeStudyMarkdown(markdown ?? '');
+    const withLinks = linkScriptureReferences(normalized);
     const raw = marked.parse(withLinks);
     return DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
   }, [renderer]);
 
-  const downloadPlan = useCallback(async (format) => {
+  const downloadPlan = useCallback(async () => {
     if (studies.length === 0) {
       return;
     }
@@ -103,15 +104,24 @@ export default function Topics() {
       const dayNumber = study.day || index + 1;
       const safeTitle = study.title || `Day ${dayNumber}`;
       const passageLine = study.passage ? `**Key Passage:** ${study.passage}\n\n` : '';
-      const safeContent = study.content || '';
+      const safeContent = normalizeStudyMarkdown(study.content || '');
       return `# Day ${dayNumber}: ${safeTitle}\n\n${passageLine}${safeContent}`;
     }).join('\n\n---\n\n');
 
-    if (format === 'pdf') {
-      exportStudyToPDF(combinedContent, 'Plan', `Topical Study - ${topicLabel}`);
-    } else if (format === 'word') {
-      await exportStudyToWord(combinedContent, 'Plan', `Topical Study - ${topicLabel}`);
-    }
+    const slugify = (value) =>
+      (value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'topical-study';
+
+    const filenameBase = slugify(topicLabel);
+
+    await exportStudyToWord(
+      combinedContent,
+      null,
+      `Topical Study - ${topicLabel}`,
+      `${filenameBase}-full-study.docx`
+    );
   }, [studies, trimmedTopic]);
 
   const downloadStudy = useCallback(async (study, index, format) => {
@@ -121,12 +131,17 @@ export default function Topics() {
 
     const dayNumber = study.day || index + 1;
     const safeTitle = study.title || `Day ${dayNumber}`;
-    const safeContent = study.content || '';
+    const safeContent = normalizeStudyMarkdown(study.content || '');
 
-    if (format === 'pdf') {
-      exportStudyToPDF(safeContent, dayNumber, safeTitle);
-    } else if (format === 'word') {
+    if (format === 'word') {
       await exportStudyToWord(safeContent, dayNumber, safeTitle);
+    } else if (format === 'txt') {
+      const blob = new Blob([safeContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `day-${dayNumber}-study.txt`;
+      a.click();
     }
   }, []);
 
@@ -299,24 +314,17 @@ export default function Topics() {
                   </span>
                 </p>
               )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+              <div style={{ marginBottom: 24 }}>
                 <button
-                  onClick={() => downloadPlan('pdf')}
+                  onClick={downloadPlan}
                   style={{
                     ...downloadButtonBase,
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                    padding: '14px 24px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    boxShadow: '0 6px 18px rgba(59, 130, 246, 0.35)',
                   }}
                 >
-                  📕 Download Full Plan (PDF)
-                </button>
-                <button
-                  onClick={() => downloadPlan('word')}
-                  style={{
-                    ...downloadButtonBase,
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-                  }}
-                >
-                  📘 Download Full Plan (Word)
+                  📘 Download Full Study (Word)
                 </button>
               </div>
               <div>
@@ -378,13 +386,13 @@ export default function Topics() {
                       />
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '20px' }}>
                         <button
-                          onClick={() => downloadStudy(study, index, 'pdf')}
+                          onClick={() => downloadStudy(study, index, 'txt')}
                           style={{
                             ...downloadButtonBase,
-                            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                           }}
                         >
-                          📕 Day {dayNumber} PDF
+                          📄 Day {dayNumber} Text
                         </button>
                         <button
                           onClick={() => downloadStudy(study, index, 'word')}

@@ -49,6 +49,158 @@ function average(nums) {
   return nums.reduce((a, b) => a + (b || 0), 0) / nums.length;
 }
 
+/**
+ * Attempts to repair malformed JSON by fixing common issues
+ * @param {string} jsonString - Potentially malformed JSON string
+ * @returns {string} - Repaired JSON string
+ */
+function repairJSON(jsonString) {
+  let repaired = jsonString;
+
+  // Remove any markdown code fences
+  repaired = repaired.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+
+  // Remove any BOM or invisible characters at start
+  repaired = repaired.replace(/^\uFEFF/, '').trim();
+
+  // --- Advanced Repair: Fix internal unescaped quotes and newlines ---
+  // This is the most common cause of "Expected ',' or ']'" errors.
+  let repairedChars = [];
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < repaired.length; i++) {
+    const char = repaired[i];
+    repairedChars.push(char);
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+    }
+  }
+
+  // Reset for a second pass to fix structures
+  for (let i = 0; i < repaired.length; i++) {
+    const char = repaired[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (char === '{' || char === '[') {
+      depth++;
+    } else if (char === '}' || char === ']') {
+      depth--;
+    }
+  }
+
+  // If we're still in a string at the end, it's a truncation. Close it.
+  if (inString) {
+    console.log('⚠ Detected unterminated string, closing it...');
+    repaired = repaired + '"'; // Close the string
+  }
+
+  // If depth is still positive, close remaining structures
+  while (depth > 0) {
+    console.log(`⚠ Detected ${depth} unclosed brackets/braces, closing them...`);
+    while (depth > 0) {
+      repaired += '}';
+      depth--;
+    }
+  }
+
+  return repaired;
+}
+
+/**
+ * Validates that a study is complete and not truncated
+ * @param {object} study - Single study object
+ * @returns {boolean} - True if study appears complete
+ */
+function isStudyComplete(study) {
+  if (!study || !study.content) return false;
+
+  const content = study.content;
+  const contentLength = content.length;
+
+  // Check minimum length (truncated studies are usually very short)
+  if (contentLength < 500) return false;
+
+  // Check for expected sections in the content
+  const requiredSections = [
+    /##\s*Introduction/i,
+    /##\s*Scripture Reading/i,
+    /##\s*Key Points/i,
+    /##\s*(Reflection|Discussion|Family|Exploratory)\s*Questions/i,
+    /##\s*Prayer Focus/i
+  ];
+
+  const sectionsFound = requiredSections.filter(regex => regex.test(content)).length;
+
+  // At least 4 out of 5 required sections should be present
+  if (sectionsFound < 4) return false;
+
+  // Check that content doesn't end abruptly (has proper ending)
+  // Truncated content often ends mid-sentence or without proper closure
+  const lastLines = content.split('\n').slice(-5).join('\n').trim();
+  if (lastLines.length < 50) return false;
+
+  return true;
+}
+
+/**
+ * Validates that all studies in an array are complete
+ * @param {array} studies - Array of study objects
+ * @returns {object} - {isValid: boolean, incompleteIndices: number[]}
+ */
+function validateStudiesCompleteness(studies) {
+  if (!Array.isArray(studies) || studies.length === 0) {
+    return { isValid: false, incompleteIndices: [], message: 'No studies provided' };
+  }
+
+  if (studies.length !== 5) {
+    return { isValid: false, incompleteIndices: [], message: `Expected 5 studies but got ${studies.length}` };
+  }
+
+  const incompleteIndices = [];
+  studies.forEach((study, index) => {
+    if (!isStudyComplete(study)) {
+      incompleteIndices.push(index);
+    }
+  });
+
+  if (incompleteIndices.length > 0) {
+    return {
+      isValid: false,
+      incompleteIndices,
+      message: `Studies ${incompleteIndices.map(i => i + 1).join(', ')} appear incomplete or truncated`
+    };
+  }
+
+  return { isValid: true, incompleteIndices: [], message: 'All studies are complete' };
+}
+
 /* ---------------------- Transcript Retrieval ------------------------ */
 
 export async function fetchYouTubeTranscript(videoId) {
@@ -94,8 +246,14 @@ const studyArraySchema = {
   maxItems: 5
 };
 
-function getModel() {
-  return genAI.getGenerativeModel({ model: MODEL_NAME });
+function getModel(config = {}) {
+  return genAI.getGenerativeModel({
+    model: MODEL_NAME,
+    generationConfig: {
+      maxOutputTokens: 8192, // Ensure enough tokens for complete study
+      ...config
+    }
+  });
 }
 
 function extractStatus(err) {
@@ -306,106 +464,220 @@ export async function generateBibleStudy(
   const includeMemory = !!options.includeMemoryVerses;
   const includeAction = !!options.includeActionSteps;
 
-  // —— Beefed-up expert prompt (grounded, exegetical, pastoral) ——
+  // —— Streamlined expert prompt (grounded, exegetical, pastoral) ——
   const studyPrompt = `
-You are a seasoned pastor-theologian and Bible study author. Produce a five-day study that is
-(1) grounded ONLY in the provided transcript excerpts and the supplied themes/scriptures,
-(2) exegetically rigorous (historical–grammatical method),
-(3) pastorally warm and spiritually formative,
-(4) precise, non-generic, and specific to THIS sermon.
+Create a complete 5-day Bible study that is:
+1. Grounded in the transcript excerpts and themes provided
+2. Exegetically sound and pastorally warm
+3. Specific to this teaching (not generic)
 
 CONTEXT
-• VIDEO TITLE: ${videoTitle}
-• THEMES (guide rails): ${themes.join(', ')}
-• KEY SCRIPTURES (seed list): ${scriptures.join(', ')}
-• TRANSCRIPT EXCERPTS (primary evidence; do not invent content not supported here):
-${transcriptSlices || '[No transcript available — respond cautiously and avoid speculative claims.]'}
+• TITLE: ${videoTitle}
+• THEMES: ${themes.join(', ')}
+• SCRIPTURES: ${scriptures.join(', ')}
+• TRANSCRIPT:
+${transcriptSlices || '[No transcript — be cautious with claims]'}
 
-USAGE PROFILE
-• TYPE: ${options.usageSelection}
-• SESSION LENGTH: ${options.sessionLength}
-• INCLUDE: ${includeDeeper ? 'Deeper analysis (Greek/Hebrew & historical context).' : '—'}
-• INCLUDE: ${includeMemory ? 'One key memory verse per day.' : '—'}
-• INCLUDE: ${includeAction ? 'One practical action step per day.' : '—'}
+PROFILE: ${options.usageSelection} | ${options.sessionLength}
+${includeDeeper ? '• Include Greek/Hebrew insights where clarifying' : ''}
+${includeMemory ? '• Include one memory verse per day' : ''}
+${includeAction ? '• Include one action step per day' : ''}
 
-AUTHORSHIP & THEOLOGY (do not browse the web)
-• Emulate expert-level exegesis and catechesis informed by broadly respected scholarship
-  (e.g., early church fathers, Reformers, classic evangelical commentators, creeds/confessions),
-  but DO NOT fabricate citations, dates, or page numbers.
-• Keep Christ-centered and Trinitarian; make Gospel connections explicit where faithful to the text.
-• Distinguish primary doctrines from secondary debates; note major interpretive options fairly,
-  then defend the most text-faithful reading from the transcript and Scripture.
-• Integrate original-language insight (Greek/Hebrew) ONLY when it clarifies the text; transliterate terms and define them plainly.
+EACH DAY MUST INCLUDE:
+Day 1 — Foundation & biblical basis
+Day 2 — Biblical context & OT-NT connections
+Day 3 — Theological depth & Gospel links
+Day 4 — Practical application
+Day 5 — Integration & worship response
 
-OUTPUT SPEC
-• Return ONLY valid JSON (no markdown fences, no extra text).
-• JSON MUST be an array of exactly five objects with fields: day, title, passage, content.
-• Inside each day's "content" string, use Markdown sections exactly as shown below.
-• Keep tone pastoral, clear, and concrete; avoid clichés and filler.
-
-PER-DAY REQUIREMENTS (tailor to the transcript)
-Day 1 — FOUNDATION: Introduce the theme; establish biblical basis from the sermon’s anchor text.
-Day 2 — BIBLICAL CONTEXT: Trace theme across Scripture; OT→NT links; historical background.
-Day 3 — THEOLOGICAL DEPTH: Doctrinal significance; Gospel connection; careful nuance.
-Day 4 — PRACTICAL APPLICATION: Concrete practices, obstacles, and patterns of obedience.
-Day 5 — INTEGRATION & RESPONSE: Summation, worship, long-term practices and community.
-
-MANDATORY MARKDOWN SHAPE FOR EACH "content" FIELD
-# Day [Number]: [Title]
+REQUIRED CONTENT STRUCTURE FOR EACH DAY:
+# Day [N]: [Title]
 
 ## Introduction
-[3–5 paragraphs tightly tied to the transcript; avoid fluff.]
+[3-5 focused paragraphs from transcript]
 
-## Scripture Reading: [Primary Reference]
-[Give immediate context (author/audience/setting), flow of argument, and why the sermon used it.]
+## Scripture Reading: [Reference]
+[Context, setting, and why this passage matters]
 
 ## Key Points
-1. [Point 1 — rooted in transcript and text]
-2. [Point 2 — with cross-refs, briefly explained]
-3. [Point 3 — with doctrinal insight tied to the Gospel]
-${includeDeeper ? '4. [Original-language or historical note that genuinely clarifies meaning]' : ''}
+1. [Transcript-rooted point]
+2. [Point with cross-refs]
+3. [Doctrinal insight with Gospel connection]
+${includeDeeper ? '4. [Greek/Hebrew or historical clarification]' : ''}
 
 ## ${questionType}
-1. [...]
-2. [...]
-3. [...]
-4. [...]
-5. [...]
+1. [Question]
+2. [Question]
+3. [Question]
+4. [Question]
+5. [Question]
 
 ## Prayer Focus
-[A short, specific prayer that reflects the day’s teaching.]
-${includeMemory ? '\n## Memory Verse\n[Book Chapter:Verse — quote the verse faithfully]\n' : ''}${includeAction ? '\n## Action Step\n[One concrete, measurable practice for the next 24–48 hours]\n' : ''}
+[Specific prayer reflecting the day's teaching]
+${includeMemory ? '\n## Memory Verse\n[Verse reference and full text]\n' : ''}${includeAction ? '\n## Action Step\n[One concrete practice]\n' : ''}
 
-CONSTRAINTS
-• Do not assert facts not supported by the transcript or Scripture. If uncertain, say so briefly.
-• Quote Scripture succinctly; reference clearly (e.g., John 15:1–5). Avoid paraphrasing that distorts meaning.
-• Avoid culture wars and speculation; aim for spiritual formation grounded in the text.
+CRITICAL: Complete ALL sections for ALL 5 days. Christ-centered, text-faithful, no speculation.
 
-RETURN FORMAT (JSON ONLY; EXACTLY FIVE ITEMS):
-[
-  {"day":1,"title":"...","passage":"...","content":"..."},
-  {"day":2,"title":"...","passage":"...","content":"..."},
-  {"day":3,"title":"...","passage":"...","content":"..."},
-  {"day":4,"title":"...","passage":"...","content":"..."},
-  {"day":5,"title":"...","passage":"...","content":"..."}
-]
+RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"...","content":"..."}
 `.trim();
 
-  const res = await generateWithRetry(model, {
-    systemInstruction: 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema.',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: studyArraySchema
-    },
-    contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
-  });
+  // Retry logic with validation
+  let attempts = 0;
+  const maxValidationAttempts = 3; // Increased to 3 attempts
+  let useTextMode = false; // Flag to switch to text mode on repeated failures
 
-  const parsed = JSON.parse(res.response.text());
-  // Light normalization in case the model misses a field
-  return parsed.map((study, index) => ({
-    day: typeof study.day === 'number' ? study.day : (index + 1),
-    title: study.title || `Day ${index + 1}`,
-    passage: study.passage || (scriptures[index] || scriptures[0] || 'Matthew 28:19-20'),
-    content: study.content || 'Study content'
-  }));
+  while (attempts < maxValidationAttempts) {
+    attempts++;
+
+    console.log(`Study generation attempt ${attempts}/${maxValidationAttempts}${useTextMode ? ' (text mode)' : ''}`);
+
+    try {
+      // Build generation config - use text mode as fallback
+      const generationConfig = useTextMode
+        ? {
+            maxOutputTokens: 8192,
+            temperature: 0.7
+          }
+        : {
+            responseMimeType: 'application/json',
+            responseSchema: studyArraySchema,
+            maxOutputTokens: 8192,
+            temperature: 0.7
+          };
+
+      const res = await generateWithRetry(model, {
+        systemInstruction: useTextMode
+          ? 'Produce precise, evidence-grounded studies. Return ONLY a valid JSON array with exactly 5 study objects. CRITICAL: Complete ALL sections for ALL 5 days. Each "content" field must include ALL required sections.'
+          : 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema. IMPORTANT: Complete ALL sections for ALL 5 days. Do not truncate content.',
+        generationConfig,
+        contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
+      });
+
+      let responseText = res.response.text();
+
+      // Log first 200 chars for debugging
+      console.log('Response preview:', responseText.substring(0, 200));
+
+      let parsed;
+      let parseSucceeded = false;
+      try {
+        // First try: direct parse (should work with responseMimeType: 'application/json')
+        parsed = JSON.parse(responseText);
+        parseSucceeded = true;
+      } catch (parseError) {
+        console.warn('Initial JSON parse failed, attempting repair:', parseError.message);
+
+        // Try advanced JSON repair
+        try {
+          const repairedJSON = repairJSON(responseText);
+          parsed = JSON.parse(repairedJSON);
+          console.log('✓ JSON parsed successfully after repair');
+          parseSucceeded = true;
+        } catch (repairError) {
+          console.error('JSON parse failed after repair. Response length:', responseText.length);
+          console.error('Parse error:', repairError.message);
+
+          // Log a snippet around the error position if available
+          const match = repairError.message.match(/position (\d+)/);
+          if (match) {
+            const pos = parseInt(match[1]);
+            const start = Math.max(0, pos - 100);
+            const end = Math.min(responseText.length, pos + 100);
+            console.error('Context around error:', responseText.substring(start, end));
+          }
+
+          // Fallback: attempt to extract JSON array manually
+          const arrayStart = responseText.indexOf('[');
+          const arrayEnd = responseText.lastIndexOf(']');
+          if (!parseSucceeded && arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
+            const candidate = responseText.slice(arrayStart, arrayEnd + 1);
+            try {
+              parsed = JSON.parse(candidate);
+              console.log('✓ JSON parsed successfully after array extraction');
+              parseSucceeded = true;
+            } catch (candidateError) {
+              console.warn('Array extraction parse failed:', candidateError.message);
+            }
+          }
+
+          // If this is not the last attempt, retry
+          if (!parseSucceeded && attempts < maxValidationAttempts) {
+            // Switch to text mode for next attempt if we're on attempt 2+
+            if (attempts >= 2 && !useTextMode) {
+              console.log('⚠ Switching to text mode for next attempt...');
+              useTextMode = true;
+            }
+            console.log('Retrying due to JSON parse error...');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            continue; // Skip to next iteration
+          } else if (!parseSucceeded) {
+            // Last attempt - throw error
+            throw new Error(`Failed to parse JSON response after ${maxValidationAttempts} attempts: ${repairError.message}`);
+          }
+        }
+      }
+
+      if (!parseSucceeded) {
+        throw new Error('Failed to parse JSON response.');
+      }
+
+      // Ensure parsed is an array
+      if (!Array.isArray(parsed)) {
+        console.error('Response is not an array:', typeof parsed);
+        if (attempts < maxValidationAttempts) {
+          console.log('Retrying due to invalid response format...');
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          continue;
+        } else {
+          throw new Error('Response is not an array after all attempts');
+        }
+      }
+
+      // Validate completeness
+      const validation = validateStudiesCompleteness(parsed);
+
+      if (validation.isValid) {
+        console.log('✓ All studies validated as complete');
+        // Light normalization in case the model misses a field
+        return parsed.map((study, index) => ({
+          day: typeof study.day === 'number' ? study.day : (index + 1),
+          title: study.title || `Day ${index + 1}`,
+          passage: study.passage || (scriptures[index] || scriptures[0] || 'Matthew 28:19-20'),
+          content: study.content || 'Study content'
+        }));
+      }
+
+      console.warn(`✗ Validation failed: ${validation.message}`);
+
+      // If this is not the last attempt, retry
+      if (attempts < maxValidationAttempts) {
+        console.log('Retrying study generation due to incomplete content...');
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Brief delay before retry
+      } else {
+        // Last attempt failed - log warning but return what we have
+        console.error('Final attempt: Studies may be incomplete but returning available content');
+        return parsed.map((study, index) => ({
+          day: typeof study.day === 'number' ? study.day : (index + 1),
+          title: study.title || `Day ${index + 1}`,
+          passage: study.passage || (scriptures[index] || scriptures[0] || 'Matthew 28:19-20'),
+          content: study.content || 'Study content'
+        }));
+      }
+    } catch (error) {
+      console.error(`Attempt ${attempts} failed:`, error.message);
+
+      // If this is not the last attempt, retry
+      if (attempts < maxValidationAttempts) {
+        console.log('Retrying after error...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Longer delay after error
+        continue;
+      } else {
+        // Last attempt failed - throw error
+        throw error;
+      }
+    }
+  }
+
+  // This should never be reached, but just in case
+  throw new Error('Study generation failed after all retry attempts');
 }
