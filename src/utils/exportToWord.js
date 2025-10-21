@@ -121,8 +121,28 @@ export async function exportStudyToWord(
       spacing: { after: 400 },
     })
   );
+
+  // --- Duplicate Title Prevention ---
+  // Check if the first line of the content is already the main title. This is
+  // common when exporting a "full study" where the content is pre-formatted.
+  // If it is, we'll skip processing that line to avoid a duplicate title.
+  let skipFirstH1 = false;
+  if (lines.length > 0) {
+    const firstLine = lines[0].trim();
+    const expectedH1 = `# ${headingText}`;
+    if (firstLine.startsWith('# ') && firstLine.replace('# ', '').trim() === headingText) {
+      skipFirstH1 = true;
+    }
+  }
+
   try {
     lines.forEach(rawLine => {
+      // If we've flagged the first H1 for skipping, do it here and reset the flag.
+      if (skipFirstH1 && rawLine.trim().startsWith('# ')) {
+        skipFirstH1 = false; // Only skip the very first H1
+        return;
+      }
+
       const line = rawLine.trimEnd();
       const trimmed = line.trim();
 

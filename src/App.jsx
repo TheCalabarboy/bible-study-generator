@@ -265,12 +265,11 @@ function App() {
     if (!study) return;
 
     if (format === 'txt') {
-      const normalizedContent = normalizeStudyMarkdown(study.content || '');
-      const blob = new Blob([normalizedContent], { type: 'text/plain' });
+      const blob = new Blob([study.content || ''], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `day-${activeDay}-study.txt`;
+      a.download = `day-${study.day}-study.txt`;
       a.click();
     } else if (format === 'word') {
       // Pass raw content - exportStudyToWord will handle normalization
@@ -368,7 +367,7 @@ function App() {
     return clean;
   };
 
-  const overlay = <LoadingOverlay isVisible={isGenerating} message="Please wait while your study is prepared. If it returns an error, try again as the generator can be overloaded sometimes" />;
+  const overlay = <LoadingOverlay isVisible={isGenerating} message="Please wait as the study is generated. If it returns an error, kindly try again as the generator can be overloaded sometimes" />;
   const studyContentRef = useRef(null);
 
   useEffect(() => {
@@ -963,7 +962,7 @@ function App() {
             borderRadius: '16px',
             marginBottom: '32px',
           }}>
-            <h2 style={{ fontSize: '32px', fontWeight: 'bold', color: '#667eea', marginBottom: '8px' }}>
+            <h2 style={{ fontSize: '32px', fontWeight: 'bold', color: '#667eea', marginBottom: '8px', wordBreak: 'break-word' }}>
               {currentStudy.title}
             </h2>
             {currentStudy.date && (

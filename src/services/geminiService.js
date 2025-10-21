@@ -660,7 +660,7 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
           day: typeof study.day === 'number' ? study.day : (index + 1),
           title: study.title || `Day ${index + 1}`,
           passage: study.passage || (scriptures[index] || scriptures[0] || 'Matthew 28:19-20'),
-          content: study.content || 'Study content'
+          content: study.content || 'Study content for this day could not be generated.'
         }));
       }
     } catch (error) {

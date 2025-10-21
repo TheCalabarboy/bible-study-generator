@@ -104,8 +104,8 @@ export default function Topics() {
       const dayNumber = study.day || index + 1;
       const safeTitle = study.title || `Day ${dayNumber}`;
       const passageLine = study.passage ? `**Key Passage:** ${study.passage}\n\n` : '';
-      const safeContent = normalizeStudyMarkdown(study.content || '');
-      return `# Day ${dayNumber}: ${safeTitle}\n\n${passageLine}${safeContent}`;
+      const rawContent = study.content || '';
+      return `# Day ${dayNumber}: ${safeTitle}\n\n${passageLine}${rawContent}`;
     }).join('\n\n---\n\n');
 
     const slugify = (value) =>
@@ -131,10 +131,9 @@ export default function Topics() {
 
     const dayNumber = study.day || index + 1;
     const safeTitle = study.title || `Day ${dayNumber}`;
-    const safeContent = normalizeStudyMarkdown(study.content || '');
 
     if (format === 'word') {
-      await exportStudyToWord(safeContent, dayNumber, safeTitle);
+      await exportStudyToWord(study.content || '', dayNumber, safeTitle);
     } else if (format === 'txt') {
       const blob = new Blob([safeContent], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
@@ -239,7 +238,10 @@ export default function Topics() {
 
   return (
     <>
-      <LoadingOverlay isVisible={isGenerating} />
+      <LoadingOverlay
+        isVisible={isGenerating}
+        message="Please wait as the study is generated. If it returns an error, kindly try again as the generator can be overloaded sometimes"
+      />
       <div
         ref={pageRef}
         style={{ minHeight: 'calc(100vh - 200px)', padding: '40px 20px',
@@ -361,7 +363,7 @@ export default function Topics() {
                         }}>
                           Day {dayNumber}
                         </span>
-                        <h3 style={{ margin: '12px 0 6px 0', color: '#312e81', fontSize: 22 }}>
+                        <h3 style={{ margin: '12px 0 6px 0', color: '#312e81', fontSize: 22, wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                           {study.title}
                         </h3>
                         {study.passage && (
