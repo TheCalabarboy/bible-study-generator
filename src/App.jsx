@@ -368,7 +368,7 @@ function App() {
     return clean;
   };
 
-  const overlay = <LoadingOverlay isVisible={isGenerating} message="Preparing your study" />;
+  const overlay = <LoadingOverlay isVisible={isGenerating} message="Please wait while your study is prepared. If it returns an error, try again as the generator can be overloaded sometimes" />;
   const studyContentRef = useRef(null);
 
   useEffect(() => {
