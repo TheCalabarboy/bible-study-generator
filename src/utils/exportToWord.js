@@ -19,9 +19,11 @@ export async function exportStudyToWord(
   // We preserve the inner text while stripping the tags. We also remove
   // any remaining HTML tags completely.
   const sanitizedContent = studyContent
+    // first, convert <br> tags to newlines
+    .replace(/<br\s*\/?>/gi, '\n')
     // unwrap anchor tags but keep their inner text
     .replace(/<a\s+[^>]*>(.*?)<\/a>/gi, '$1')
-    // drop any other HTML tags like <em>, <strong>, <br/>, etc.
+    // drop any other HTML tags like <em>, <strong>, etc.
     .replace(/<[^>]+>/g, '')
     // normalise line breaks
     .replace(/\r\n/g, '\n');
