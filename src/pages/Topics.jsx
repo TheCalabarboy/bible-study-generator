@@ -12,6 +12,7 @@ export default function Topics() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const [studies, setStudies] = useState([]);
+  const [isRecording, setIsRecording] = useState(false);
   const hasStudies = studies.length > 0;
   const trimmedTopic = topic.trim();
   const focusLabel = trimmedTopic.length > 160
@@ -19,6 +20,7 @@ export default function Topics() {
     : trimmedTopic;
   const pageRef = useRef(null);
 
+  const speechRecognition = useRef(null);
   const renderer = useMemo(() => {
     const customRenderer = new marked.Renderer();
 
@@ -83,6 +85,42 @@ export default function Topics() {
       container.removeEventListener('click', handleClick);
     };
   }, [hasStudies, studies]);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        // Append final transcript to the existing topic text
+        if (finalTranscript) {
+          setTopic(prev => (prev ? prev + ' ' : '') + finalTranscript.trim());
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        setError('Speech recognition failed. Please check microphone permissions.');
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+      speechRecognition.current = recognition;
+    }
+  }, []);
 
   const renderStudyHTML = useCallback((markdown) => {
     const normalized = normalizeStudyMarkdown(markdown ?? '');
@@ -167,6 +205,18 @@ export default function Topics() {
     sessionLength: '30 min',
     includeActionSteps: true,
     includeMemoryVerses: true
+  };
+
+  const handleMicClick = () => {
+    if (isRecording) {
+      speechRecognition.current?.stop();
+      setIsRecording(false);
+    } else {
+      if (speechRecognition.current) {
+        speechRecognition.current.start();
+        setIsRecording(true);
+      }
+    }
   };
 
   async function onSubmit(e) {
@@ -276,25 +326,47 @@ export default function Topics() {
                 minHeight: '140px'
               }}
             />
-            <button
-              type="submit"
-              disabled={isGenerating}
-              style={{
-                alignSelf: 'flex-start',
-                padding: '12px 24px',
-                fontWeight: 700,
-                fontSize: 16,
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                background: isGenerating ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                boxShadow: '0 10px 25px rgba(102, 126, 234, 0.35)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-              }}
-            >
-              {isGenerating ? 'Generating…' : 'Generate'}
-            </button>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <button
+                type="submit"
+                disabled={isGenerating || isRecording}
+                style={{
+                  padding: '12px 24px',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  background: (isGenerating || isRecording) ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  boxShadow: '0 10px 25px rgba(102, 126, 234, 0.35)',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+              >
+                {isGenerating ? 'Generating…' : 'Generate'}
+              </button>
+              {speechRecognition.current && (
+                <button
+                  type="button"
+                  onClick={handleMicClick}
+                  disabled={isGenerating}
+                  title={isRecording ? 'Stop recording' : 'Start recording'}
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: isRecording ? '#ef4444' : '#f3f4f6',
+                    color: isRecording ? 'white' : '#4b5563',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                  }}
+                >🎙️</button>
+              )}
+            </div>
           </form>
 
           {error && (
