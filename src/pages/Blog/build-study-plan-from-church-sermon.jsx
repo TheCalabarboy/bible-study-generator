@@ -1,10 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import heroImg from '../../assets/blog/build-study-plan-hero.png';
 
 export default function BuildStudyPlan() {
+  const pageTitle = "How to Build a Bible Study Plan from a Church Sermon | SermonDive";
+  const pageDescription = "Learn how to transform a Sunday sermon into a transformative week-long Bible study plan. Follow our 5-day framework for deeper spiritual growth.";
+  const pageUrl = "https://www.sermondive.com/blog/build-study-plan-from-church-sermon"; // Replace with your actual domain
+
   return (
     <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:image" content={heroImg} />
+        <meta property="og:url" content={pageUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -66,7 +80,7 @@ export default function BuildStudyPlan() {
           <div style={{ margin: '24px 0 36px' }}>
             <img
               src={heroImg}
-              alt="Describe the photo clearly for accessibility and SEO"
+              alt="A person writing in a journal with a Bible and laptop, illustrating how to build a Bible study plan from a sermon."
               loading="lazy"
               style={{
                 width: '100%',
