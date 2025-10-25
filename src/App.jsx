@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { HelmetProvider } from 'react-helmet-async';
 // import { useAuth } from './contexts/AuthContext'; // (unused while auth bypass is active)
 import { exportStudyToWord } from './utils/exportToWord';
 import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/geminiService';
@@ -392,7 +391,6 @@ function App() {
   // LOGIN SCREEN
   if (!AUTH_DISABLED && step === 'login' && !currentUser) {
     return (
-      <HelmetProvider>
 
       <>
         {overlay}
@@ -512,15 +510,12 @@ function App() {
           </div>
         </div>
       </>
-      </HelmetProvider>
     );
   }
 
   // INPUT SCREEN
   if (step === 'input') {
     return (
-      <HelmetProvider>
-
       <>
         {overlay}
         <div style={styles.gradientBg}>
@@ -799,15 +794,12 @@ function App() {
         </div>
       </div>
       </>
-      </HelmetProvider>
     );
   }
 
   // RESULT SCREEN (fallback debug if no currentStudy)
   if (!currentStudy) {
     return (
-      <HelmetProvider>
-
       <>
         {overlay}
         <div style={{ padding: '40px', textAlign: 'center', color: 'white' }}>
@@ -831,14 +823,11 @@ function App() {
           </button>
         </div>
       </>
-      </HelmetProvider>
     );
   }
 
   // RESULT SCREEN (normal)
   return (
-    <HelmetProvider>
-
     <div style={styles.gradientBg}>
       {overlay}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -1242,7 +1231,6 @@ function App() {
         </div>
       </div>
     </div>
-    </HelmetProvider>
   );
 }
 
