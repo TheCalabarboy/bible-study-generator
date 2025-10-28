@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import VideoModal from '../components/VideoModal';
 
 export default function HomePage() {
+  const introVideoId = import.meta.env.VITE_INTRO_VIDEO_ID || 'IwooZSKSDpg';
+
   return (
     <div style={{
       minHeight: 'calc(100vh - 200px)',
@@ -93,6 +96,14 @@ export default function HomePage() {
           {/* Christ-Centered card removed */}
         </div>
       </div>
+      {introVideoId && (
+        <VideoModal
+          videoId={introVideoId}
+          storageKey="introVideoDismissed"
+          headline="Welcome to SermonDive"
+          description="Here’s a quick tour showing how to transform sermons into five-day Bible studies."
+        />
+      )}
     </div>
   );
 }
