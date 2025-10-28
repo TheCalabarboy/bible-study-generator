@@ -42,6 +42,9 @@ export default function Footer() {
             <Link to="/privacy" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
             Privacy Policy
             </Link>
+            <Link to="/feedback" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
+              Feedback
+            </Link>
           </div>
         </div>
         

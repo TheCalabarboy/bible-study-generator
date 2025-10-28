@@ -15,6 +15,7 @@ import Post from './pages/Blog/Post';
 import About from './pages/About';
 import FAQ from './pages/FAQ';
 import Privacy from './pages/Privacy';
+import Feedback from './pages/Feedback';
 
 // Generator pages
 import Generate from './pages/Generate';
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
       { path: 'about', element: <About /> },
       { path: 'faq', element: <FAQ /> },
       { path: 'privacy', element: <Privacy /> },
+      { path: 'feedback', element: <Feedback /> },
 
       // Blog hub + nested routes
       {
