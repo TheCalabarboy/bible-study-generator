@@ -4,6 +4,7 @@ import {
   quizQuestionBank,
   QUESTIONS_PER_LEVEL,
 } from '../data/quizQuestions';
+import { buildScriptureUrl } from '../utils/linkScriptureReferences';
 
 const LEVELS = Array.from({ length: 10 }, (_, index) => index + 1);
 
@@ -146,6 +147,12 @@ export default function Quiz() {
     setDifficulty(nextDifficulty);
     setLevel(1);
     setSessionSeed((prev) => prev + 1);
+  };
+
+  const openScriptureReference = (reference) => {
+    if (!reference) return;
+    const url = buildScriptureUrl(reference);
+    window.open(url, 'scriptureReference', 'width=600,height=700,noopener');
   };
 
   const correctCount = score;
@@ -486,7 +493,21 @@ export default function Quiz() {
                     {feedback}
                     {isAnswerRevealed && currentQuestion.reference && (
                       <div style={{ marginTop: 8, fontSize: 13, color: '#4338ca', fontWeight: 600 }}>
-                        Scripture: {currentQuestion.reference}
+                        Scripture:{' '}
+                        <a
+                          href={buildScriptureUrl(currentQuestion.reference)}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            openScriptureReference(currentQuestion.reference);
+                          }}
+                          style={{
+                            color: '#4338ca',
+                            textDecoration: 'underline',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {currentQuestion.reference}
+                        </a>
                       </div>
                     )}
                   </div>

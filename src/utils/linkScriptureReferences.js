@@ -93,12 +93,17 @@ export function linkScriptureReferences(markdown = '', version = 'NKJV') {
     }
 
     const cleaned = match.replace(/\s+/g, ' ').trim();
-    const normalized = cleaned.replace(/\u2013/g, '-'); // en dash to hyphen
-    const encoded = encodeURIComponent(normalized);
-    const href = `https://www.biblegateway.com/passage/?search=${encoded}&version=${encodeURIComponent(
-      version
-    )}`;
+    const href = buildScriptureUrl(cleaned, version);
 
     return `<a href="${href}" data-scripture-link="true">${cleaned}</a>`;
   });
+}
+
+export function buildScriptureUrl(reference, version = 'NKJV') {
+  if (!reference) return '#';
+  const normalized = reference.replace(/\s+/g, ' ').trim().replace(/\u2013/g, '-');
+  const encodedReference = encodeURIComponent(normalized);
+  return `https://www.biblegateway.com/passage/?search=${encodedReference}&version=${encodeURIComponent(
+    version
+  )}`;
 }
