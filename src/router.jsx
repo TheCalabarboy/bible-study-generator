@@ -16,6 +16,7 @@ import About from './pages/About';
 import FAQ from './pages/FAQ';
 import Privacy from './pages/Privacy';
 import Feedback from './pages/Feedback';
+import Quiz from './pages/Quiz';
 
 // Generator pages
 import Generate from './pages/Generate';
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       // generator routes
       { path: 'generate', element: <Generate /> },
       { path: 'topics', element: <Topics /> },
+      { path: 'quiz', element: <Quiz /> },
 
       { path: 'about', element: <About /> },
       { path: 'faq', element: <FAQ /> },

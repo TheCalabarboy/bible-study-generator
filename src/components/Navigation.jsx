@@ -7,6 +7,9 @@ export default function Navigation() {
 
   const links = [
     { path: '/', label: 'Home' },
+    { path: '/generate', label: 'Generate' },
+    { path: '/topics', label: 'Topics' },
+    { path: '/quiz', label: 'Quiz' },
     { path: '/blog', label: 'Blog' },
     { path: '/about', label: 'About' },
     { path: '/faq', label: 'FAQ' },

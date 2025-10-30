@@ -33,6 +33,15 @@ export default function Footer() {
             <Link to="/" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
               Home
             </Link>
+            <Link to="/generate" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
+              Generate Study
+            </Link>
+            <Link to="/topics" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
+              Explore Topics
+            </Link>
+            <Link to="/quiz" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
+              Bible Quiz
+            </Link>
             <Link to="/about" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
               About Us
             </Link>
