@@ -53,7 +53,20 @@ export default function Navigation() {
         </Link>
 
         {/* Right: Nav links (NO Login) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            justifyContent: 'flex-end',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            maxWidth: '100%',
+            minWidth: 0,
+            flex: '1 1 auto',
+            paddingBottom: 4,
+          }}
+        >
           {links.map((l) => (
             <Link
               key={l.path}
