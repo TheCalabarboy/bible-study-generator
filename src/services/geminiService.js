@@ -7,7 +7,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { YoutubeTranscript } from 'youtube-transcript';
 
-const MODEL_NAME = 'gemini-1.5-pro';
+// Default to the current stable Pro model; allow override via env for flexibility.
+const MODEL_NAME = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-pro';
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 /* ----------------------------- Utilities ----------------------------- */
