@@ -12,31 +12,31 @@ export default function HomePage() {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 200px)',
-      background: 'linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 50%, #FFFFFF 100%)',
+      minHeight: '100vh',
+      background: 'var(--gradient-hero)',
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Subtle Background Pattern */}
+      {/* DocShield-Inspired Background Pattern */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: `radial-gradient(circle at 20% 50%, rgba(0, 122, 255, 0.03) 0%, transparent 50%),
-                          radial-gradient(circle at 80% 80%, rgba(88, 86, 214, 0.03) 0%, transparent 50%)`,
+        background: 'var(--gradient-warm-cool)',
+        opacity: 0.15,
         pointerEvents: 'none',
       }} />
 
       <div style={{
-        maxWidth: '1100px',
+        maxWidth: '1400px',
         margin: '0 auto',
-        padding: 'var(--space-20) var(--space-6)',
+        padding: 'var(--space-100) var(--space-12)',
         position: 'relative',
         zIndex: 1,
       }}>
-        {/* Hero Section */}
+        {/* Hero Section - DocShield Style */}
         <div style={{
           textAlign: 'center',
-          marginBottom: 'var(--space-20)',
+          marginBottom: 'var(--space-100)',
           opacity: isVisible ? 1 : 0,
           transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -49,78 +49,96 @@ export default function HomePage() {
           }}>📖</div>
 
           <h1 style={{
-            fontSize: 'clamp(40px, 6vw, 64px)',
-            fontWeight: '700',
-            marginBottom: 'var(--space-4)',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            letterSpacing: '-0.03em',
+            fontSize: 'clamp(48px, 7vw, 80px)',
+            fontWeight: '400',
+            marginBottom: 'var(--space-8)',
+            color: 'var(--color-gray-900)',
+            letterSpacing: '-0.02em',
+            lineHeight: '1.1',
           }}>
-            SermonDive
+            Transform Sermons into<br />Daily Spiritual Growth
           </h1>
 
           <p style={{
-            fontSize: 'clamp(20px, 3vw, 32px)',
-            fontWeight: '600',
-            marginBottom: 'var(--space-4)',
-            color: 'var(--color-gray-800)',
-            letterSpacing: '-0.01em',
-          }}>
-            Transform Sermons into Daily Spiritual Growth
-          </p>
-
-          <p style={{
-            fontSize: 'clamp(16px, 2vw, 20px)',
-            lineHeight: '1.7',
-            color: 'var(--color-gray-600)',
-            maxWidth: '700px',
-            margin: '0 auto var(--space-12)',
+            fontSize: 'clamp(18px, 2.5vw, 24px)',
+            lineHeight: '1.6',
+            color: 'var(--color-gray-700)',
+            maxWidth: '800px',
+            margin: '0 auto var(--space-71)',
             fontWeight: '400',
           }}>
             Turn any Christian sermon or teaching into a comprehensive 5-day Bible study plan.
             Deepen your faith, explore Scripture, and apply biblical truth to your life.
           </p>
 
-          {/* Primary CTA */}
-          <Link
-            to="/generate"
-            style={{
-              display: 'inline-block',
-              padding: 'var(--space-4) var(--space-10)',
-              fontSize: '18px',
-              fontWeight: '600',
-              color: 'var(--color-white)',
-              background: 'var(--gradient-primary)',
-              borderRadius: 'var(--radius-full)',
-              textDecoration: 'none',
-              boxShadow: 'var(--shadow-lg)',
-              transition: 'all var(--transition-base)',
-              border: 'none',
-              cursor: 'pointer',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px) scale(1.02)';
-              e.target.style.boxShadow = 'var(--shadow-xl)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0) scale(1)';
-              e.target.style.boxShadow = 'var(--shadow-lg)';
-            }}
-          >
-            Get Started
-          </Link>
+          {/* Primary CTA - DocShield Style */}
+          <div style={{
+            display: 'flex',
+            gap: 'var(--space-4)',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}>
+            <Link
+              to="/generate"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 'var(--space-4) var(--space-8)',
+                fontSize: '17px',
+                fontWeight: '600',
+                color: 'var(--color-gray-900)',
+                background: 'var(--color-gray-100)',
+                borderRadius: 'var(--radius-md)',
+                textDecoration: 'none',
+                border: '1px solid var(--color-gray-200)',
+                transition: 'opacity var(--transition-fast)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.opacity = '0.8';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.opacity = '1';
+              }}
+            >
+              Get Started
+            </Link>
+
+            <Link
+              to="/topics"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 'var(--space-4) var(--space-8)',
+                fontSize: '17px',
+                fontWeight: '600',
+                color: 'var(--color-gray-700)',
+                background: 'transparent',
+                borderRadius: 'var(--radius-md)',
+                textDecoration: 'none',
+                border: '1px solid var(--color-gray-300)',
+                transition: 'opacity var(--transition-fast)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.opacity = '0.7';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.opacity = '1';
+              }}
+            >
+              Browse Topics
+            </Link>
+          </div>
         </div>
 
-        {/* Feature Cards */}
+        {/* Feature Cards - DocShield Spacing */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 'var(--space-6)',
-          marginTop: 'var(--space-16)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: 'var(--space-71)',
           opacity: isVisible ? 1 : 0,
           transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
           transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s',
@@ -129,27 +147,23 @@ export default function HomePage() {
           <Link
             to="/generate"
             style={{
-              background: 'rgba(255, 255, 255, 0.7)',
+              background: 'rgba(255, 255, 255, 0.9)',
               backdropFilter: 'blur(var(--blur-md))',
               WebkitBackdropFilter: 'blur(var(--blur-md))',
-              padding: 'var(--space-8)',
-              borderRadius: 'var(--radius-2xl)',
-              border: '1px solid rgba(0, 0, 0, 0.06)',
+              padding: 'var(--space-12)',
+              borderRadius: '20px',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
               textDecoration: 'none',
-              transition: 'all var(--transition-base)',
-              boxShadow: 'var(--shadow-sm)',
+              transition: 'opacity var(--transition-fast)',
+              boxShadow: 'var(--shadow-md)',
               position: 'relative',
               overflow: 'hidden',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-              e.currentTarget.style.borderColor = 'rgba(0, 122, 255, 0.2)';
+              e.currentTarget.style.opacity = '0.85';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.06)';
+              e.currentTarget.style.opacity = '1';
             }}
           >
             <div style={{
@@ -188,27 +202,23 @@ export default function HomePage() {
           <Link
             to="/topics"
             style={{
-              background: 'rgba(255, 255, 255, 0.7)',
+              background: 'rgba(255, 255, 255, 0.9)',
               backdropFilter: 'blur(var(--blur-md))',
               WebkitBackdropFilter: 'blur(var(--blur-md))',
-              padding: 'var(--space-8)',
-              borderRadius: 'var(--radius-2xl)',
-              border: '1px solid rgba(0, 0, 0, 0.06)',
+              padding: 'var(--space-12)',
+              borderRadius: '20px',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
               textDecoration: 'none',
-              transition: 'all var(--transition-base)',
-              boxShadow: 'var(--shadow-sm)',
+              transition: 'opacity var(--transition-fast)',
+              boxShadow: 'var(--shadow-md)',
               position: 'relative',
               overflow: 'hidden',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-              e.currentTarget.style.borderColor = 'rgba(88, 86, 214, 0.2)';
+              e.currentTarget.style.opacity = '0.85';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.06)';
+              e.currentTarget.style.opacity = '1';
             }}
           >
             <div style={{

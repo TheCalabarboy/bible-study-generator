@@ -521,15 +521,14 @@ function App() {
         {overlay}
         <div style={{
           minHeight: '100vh',
-          background: 'var(--gradient-background)',
-          padding: 'var(--space-10) var(--space-6)',
+          background: 'var(--gradient-hero)',
+          padding: 'var(--space-100) var(--space-12)',
         }}>
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
             {/* Header */}
             <div style={{
               textAlign: 'center',
-              marginBottom: 'var(--space-10)',
-              paddingTop: 'var(--space-8)',
+              marginBottom: 'var(--space-71)',
             }}>
               <div style={{ marginBottom: 'var(--space-4)' }}>
                 <img
@@ -544,21 +543,20 @@ function App() {
                 />
               </div>
               <h1 style={{
-                fontSize: 'clamp(36px, 5vw, 48px)',
-                fontWeight: '700',
-                marginBottom: 'var(--space-3)',
-                background: 'var(--gradient-primary)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                fontSize: 'clamp(36px, 5vw, 56px)',
+                fontWeight: '400',
+                marginBottom: 'var(--space-4)',
+                color: 'var(--color-gray-900)',
                 letterSpacing: '-0.02em',
+                lineHeight: '1.1',
               }}>
                 SermonDive
               </h1>
               <p style={{
-                fontSize: '18px',
+                fontSize: '20px',
                 color: 'var(--color-gray-700)',
-                fontWeight: '500',
+                fontWeight: '400',
+                lineHeight: '1.6',
               }}>
                 Transform YouTube Sermons into a 5-Day Bible Study Plan
               </p>
@@ -655,6 +653,7 @@ function App() {
               <Button
                 onClick={generateStudy}
                 disabled={!youtubeLink || isGenerating}
+                variant="gradient"
                 style={{ marginTop: 'var(--space-4)' }}
               >
                 {isGenerating ? '🤖 Analyzing video & generating study...' : '✨ Generate Study Guide'}
@@ -705,8 +704,8 @@ function App() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'var(--gradient-background)',
-      padding: 'var(--space-6)',
+      background: 'var(--gradient-hero)',
+      padding: 'var(--space-71) var(--space-12)',
     }}>
       {overlay}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -910,14 +909,14 @@ function App() {
           }}>
             <Button
               onClick={() => downloadDayStudy('txt')}
-              variant="success"
+              variant="primary"
             >
               📄 Download Text
             </Button>
 
             <Button
               onClick={() => downloadDayStudy('word')}
-              variant="primary"
+              variant="gradient"
             >
               📘 Download Word
             </Button>
@@ -926,7 +925,7 @@ function App() {
           <div style={{ marginBottom: 'var(--space-8)' }}>
             <Button
               onClick={downloadFullStudy}
-              variant="primary"
+              variant="gradient"
               style={{ width: 'auto', paddingLeft: 'var(--space-8)', paddingRight: 'var(--space-8)' }}
             >
               📘 Download Full Study (Word)
@@ -1035,7 +1034,7 @@ function App() {
                 logEvent('Navigation', 'Previous_Day', `Day ${activeDay - 1}`);
               }}
               disabled={activeDay === 1}
-              variant="primary"
+              variant="gradient"
             >
               ← Previous Day
             </Button>
@@ -1048,7 +1047,7 @@ function App() {
                 setActiveDay(1);
                 setDailyStudies([]);
               }}
-              variant="secondary"
+              variant="primary"
             >
               🔄 New Study
             </Button>
@@ -1059,7 +1058,7 @@ function App() {
                 logEvent('Navigation', 'Next_Day', `Day ${activeDay + 1}`);
               }}
               disabled={activeDay === dailyStudies.length}
-              variant="primary"
+              variant="gradient"
             >
               Next Day →
             </Button>

@@ -130,17 +130,22 @@ export function Checkbox({ checked, onChange, label, description, style = {}, ..
 export function Button({ children, onClick, disabled, variant = 'primary', style = {}, ...props }) {
   const variants = {
     primary: {
-      background: 'var(--gradient-primary)',
-      color: 'var(--color-white)',
-      border: 'none',
-    },
-    secondary: {
       background: 'var(--color-gray-100)',
       color: 'var(--color-gray-900)',
       border: '1px solid var(--color-gray-200)',
     },
+    secondary: {
+      background: 'var(--color-white)',
+      color: 'var(--color-gray-900)',
+      border: '1px solid var(--color-gray-300)',
+    },
     success: {
       background: 'var(--gradient-success)',
+      color: 'var(--color-white)',
+      border: 'none',
+    },
+    gradient: {
+      background: 'var(--gradient-primary)',
       color: 'var(--color-white)',
       border: 'none',
     },
@@ -160,7 +165,7 @@ export function Button({ children, onClick, disabled, variant = 'primary', style
         fontFamily: 'var(--font-sans)',
         borderRadius: 'var(--radius-lg)',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'all var(--transition-base)',
+        transition: 'opacity var(--transition-fast)',
         boxShadow: disabled ? 'none' : 'var(--shadow-sm)',
         opacity: disabled ? 0.5 : 1,
         ...variantStyle,
@@ -168,14 +173,12 @@ export function Button({ children, onClick, disabled, variant = 'primary', style
       }}
       onMouseEnter={(e) => {
         if (!disabled) {
-          e.currentTarget.style.transform = 'translateY(-1px)';
-          e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+          e.currentTarget.style.opacity = '0.8';
         }
       }}
       onMouseLeave={(e) => {
         if (!disabled) {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+          e.currentTarget.style.opacity = '1';
         }
       }}
       {...props}
