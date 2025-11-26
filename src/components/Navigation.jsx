@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from '../assets/Logo.png';
 
@@ -23,48 +22,74 @@ export default function Navigation() {
   return (
     <nav
       style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        padding: '12px 0',
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(var(--blur-lg))',
+        WebkitBackdropFilter: 'blur(var(--blur-lg))',
+        boxShadow: '0 1px 0 rgba(0, 0, 0, 0.05)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+        padding: 'var(--space-3) 0',
         position: 'sticky',
         top: 0,
         zIndex: 1000,
+        transition: 'all var(--transition-base)',
       }}
     >
       <div
         style={{
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: '0 20px',
+          padding: '0 var(--space-6)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '16px',
+          gap: 'var(--space-6)',
         }}
       >
         {/* Left: Logo / Home */}
         <Link
           to="/"
-          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}
+          style={{
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            transition: 'opacity var(--transition-fast)',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
         >
-          <img src={Logo} alt="SermonDive" style={{ height: 40, width: 'auto' }} />
-          <span style={{ fontWeight: 800, fontSize: 20, color: '#333' }}>SermonDive</span>
+          <img
+            src={Logo}
+            alt="SermonDive"
+            style={{
+              height: '36px',
+              width: 'auto',
+            }}
+          />
+          <span
+            style={{
+              fontWeight: '700',
+              fontSize: '19px',
+              color: 'var(--color-gray-900)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            SermonDive
+          </span>
         </Link>
 
-        {/* Right: Nav links (NO Login) */}
+        {/* Right: Nav links */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 16,
+            gap: 'var(--space-2)',
             justifyContent: 'flex-end',
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
             maxWidth: '100%',
             minWidth: 0,
             flex: '1 1 auto',
-            paddingBottom: 4,
           }}
         >
           {links.map((l) => (
@@ -73,20 +98,36 @@ export default function Navigation() {
               to={l.path}
               style={{
                 textDecoration: 'none',
-                fontWeight: 600,
-                padding: '8px 12px',
-                borderRadius: 10,
-                color: isActive(l.path) ? '#5b67e6' : '#333',
-                background: isActive(l.path) ? 'rgba(102,126,234,0.12)' : 'transparent',
-                transition: 'background 0.2s, transform 0.1s',
+                fontWeight: '500',
+                fontSize: '15px',
+                padding: 'var(--space-2) var(--space-4)',
+                borderRadius: 'var(--radius-md)',
+                color: isActive(l.path)
+                  ? 'var(--color-primary)'
+                  : 'var(--color-gray-700)',
+                background: isActive(l.path)
+                  ? 'rgba(0, 122, 255, 0.08)'
+                  : 'transparent',
+                transition: 'all var(--transition-fast)',
+                whiteSpace: 'nowrap',
+                position: 'relative',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+              onMouseEnter={(e) => {
+                if (!isActive(l.path)) {
+                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.04)';
+                  e.currentTarget.style.color = 'var(--color-gray-900)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive(l.path)) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-gray-700)';
+                }
+              }}
             >
               {l.label}
             </Link>
           ))}
-          {/* Intentionally no Log In / Sign Up buttons */}
         </div>
       </div>
     </nav>

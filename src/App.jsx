@@ -10,6 +10,7 @@ import DOMPurify from 'dompurify';
 import { linkScriptureReferences } from './utils/linkScriptureReferences';
 import { normalizeStudyMarkdown } from './utils/normalizeStudyMarkdown';
 import LoadingOverlay from './components/LoadingOverlay';
+import { Input, Select, Checkbox, Button, Card, Label, ErrorMessage, SuccessBanner } from './components/UIComponents';
 
 function App() {
   // === AUTH FEATURE TOGGLE ===
@@ -518,281 +519,155 @@ function App() {
     return (
       <>
         {overlay}
-        <div style={styles.gradientBg}>
+        <div style={{
+          minHeight: '100vh',
+          background: 'var(--gradient-background)',
+          padding: 'var(--space-10) var(--space-6)',
+        }}>
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '40px', color: 'white', paddingTop: '40px' }}>
-            <div style={{ marginBottom: '16px' }}>
-              <img
-                src={Logo}
-                alt="SermonDive Logo"
-                style={{
-                  width: '200px',
-                  height: 'auto',
-                  margin: '0 auto',
-                  display: 'block'
-                }}
-              />
-            </div>
-            <h1 style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              marginBottom: '12px',
-              fontFamily: "'Proxima Nova', sans-serif"
+            {/* Header */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: 'var(--space-10)',
+              paddingTop: 'var(--space-8)',
             }}>
-              SermonDive
-            </h1>
-            <p style={{
-              fontSize: '20px',
-              opacity: '0.9',
-              fontFamily: "'Poppins', sans-serif"
-            }}>
-              Transform YouTube Sermons into a 5-Day Bible Study Plan
-            </p>
-          </div>
-
-          {/* Main Card */}
-          <div style={{
-            background: 'white',
-            borderRadius: '24px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            padding: '40px',
-            marginBottom: '24px',
-          }}>
-            <label style={{
-              display: 'block',
-              color: '#333',
-              fontWeight: 'bold',
-              fontSize: '24px',
-              marginBottom: '16px'
-            }}>
-              🎥 YouTube Link
-            </label>
-            <p style={{ color: '#666', marginBottom: '16px' }}>
-              Enter a YouTube link of a Christian Sermon:
-            </p>
-
-            <input
-              type="text"
-              value={youtubeLink}
-              onChange={(e) => setYoutubeLink(e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=..."
-              style={{
-                width: '100%',
-                padding: '16px',
-                fontSize: '16px',
-                border: '2px solid #e0e0e0',
-                borderRadius: '12px',
-                marginTop: '12px',
-                outline: 'none',
-              }}
-            />
-
-            {/* Options */}
-            <div style={{ marginTop: '32px' }}>
-              <label style={{
-                display: 'block',
-                color: '#333',
-                fontWeight: 'bold',
-                fontSize: '18px',
-                marginBottom: '12px'
+              <div style={{ marginBottom: 'var(--space-4)' }}>
+                <img
+                  src={Logo}
+                  alt="SermonDive Logo"
+                  style={{
+                    width: '180px',
+                    height: 'auto',
+                    margin: '0 auto',
+                    display: 'block'
+                  }}
+                />
+              </div>
+              <h1 style={{
+                fontSize: 'clamp(36px, 5vw, 48px)',
+                fontWeight: '700',
+                marginBottom: 'var(--space-3)',
+                background: 'var(--gradient-primary)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                letterSpacing: '-0.02em',
               }}>
-                How would you like this study to be used?
-              </label>
-              <select
-                value={options.usageSelection}
-                onChange={(e) => setOptions({ ...options, usageSelection: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '16px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '12px',
-                  outline: 'none',
-                }}
-              >
-                <option>Personal Study</option>
-                <option>Small Group</option>
-                <option>Family Devotions</option>
-                <option>Sharing with Friends</option>
-              </select>
+                SermonDive
+              </h1>
+              <p style={{
+                fontSize: '18px',
+                color: 'var(--color-gray-700)',
+                fontWeight: '500',
+              }}>
+                Transform YouTube Sermons into a 5-Day Bible Study Plan
+              </p>
             </div>
 
-            <div style={{ marginTop: '24px' }}>
-              <label style={{
-                display: 'block',
-                color: '#333',
-                fontWeight: 'bold',
-                fontSize: '18px',
-                marginBottom: '12px'
-              }}>
-                📅 Start Date (Optional)
-              </label>
-              <input
-                type="date"
-                value={options.startDate}
-                onChange={(e) => setOptions({ ...options, startDate: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '16px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '12px',
-                  outline: 'none',
-                }}
-              />
-            </div>
+            {/* Main Card */}
+            <Card style={{ marginBottom: 'var(--space-6)' }}>
+              <div style={{ marginBottom: 'var(--space-8)' }}>
+                <Label style={{ fontSize: '20px', marginBottom: 'var(--space-2)' }}>
+                  🎥 YouTube Link
+                </Label>
+                <p style={{
+                  color: 'var(--color-gray-600)',
+                  marginBottom: 'var(--space-4)',
+                  fontSize: '15px',
+                }}>
+                  Enter a YouTube link of a Christian Sermon:
+                </p>
 
-            <div style={{ marginTop: '24px' }}>
-              <label style={{
-                display: 'block',
-                color: '#333',
-                fontWeight: 'bold',
-                fontSize: '18px',
-                marginBottom: '12px'
-              }}>
-                ⏱️ Session Length
-              </label>
-              <select
-                value={options.sessionLength}
-                onChange={(e) => setOptions({ ...options, sessionLength: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '16px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '12px',
-                  outline: 'none',
-                }}
-              >
-                <option>15 min</option>
-                <option>30 min</option>
-                <option>45 min</option>
-                <option>1 hour</option>
-              </select>
-            </div>
+                <Input
+                  value={youtubeLink}
+                  onChange={(e) => setYoutubeLink(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+              </div>
 
-            <div style={{ marginTop: '24px' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                color: '#333',
-                fontSize: '16px',
-                cursor: 'pointer'
+              {/* Options */}
+              <div style={{ marginBottom: 'var(--space-6)' }}>
+                <Label>How would you like this study to be used?</Label>
+                <Select
+                  value={options.usageSelection}
+                  onChange={(e) => setOptions({ ...options, usageSelection: e.target.value })}
+                >
+                  <option>Personal Study</option>
+                  <option>Small Group</option>
+                  <option>Family Devotions</option>
+                  <option>Sharing with Friends</option>
+                </Select>
+              </div>
+
+              <div style={{ marginBottom: 'var(--space-6)' }}>
+                <Label>📅 Start Date (Optional)</Label>
+                <Input
+                  type="date"
+                  value={options.startDate}
+                  onChange={(e) => setOptions({ ...options, startDate: e.target.value })}
+                />
+              </div>
+
+              <div style={{ marginBottom: 'var(--space-6)' }}>
+                <Label>⏱️ Session Length</Label>
+                <Select
+                  value={options.sessionLength}
+                  onChange={(e) => setOptions({ ...options, sessionLength: e.target.value })}
+                >
+                  <option>15 min</option>
+                  <option>30 min</option>
+                  <option>45 min</option>
+                  <option>1 hour</option>
+                </Select>
+              </div>
+
+              <div style={{
+                background: 'var(--color-gray-50)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-4)',
+                marginBottom: 'var(--space-6)',
               }}>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={options.includeDeeperAnalysis}
                   onChange={(e) => setOptions({ ...options, includeDeeperAnalysis: e.target.checked })}
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    marginRight: '10px',
-                    cursor: 'pointer'
-                  }}
+                  label="Include Deeper Analysis"
+                  description="Add Greek/Hebrew word studies and historical context"
+                  style={{ padding: 'var(--space-2)', margin: 0 }}
                 />
-                <span>
-                  <strong>Include Deeper Analysis</strong>
-                  <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
-                    Add Greek/Hebrew word studies and historical context
-                  </span>
-                </span>
-              </label>
-            </div>
 
-            <div style={{ marginTop: '16px' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                color: '#333',
-                fontSize: '16px',
-                cursor: 'pointer'
-              }}>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={options.includeMemoryVerses}
                   onChange={(e) => setOptions({ ...options, includeMemoryVerses: e.target.checked })}
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    marginRight: '10px',
-                    cursor: 'pointer'
-                  }}
+                  label="Include Memory Verses"
+                  description="Add key verses to memorize each day"
+                  style={{ padding: 'var(--space-2)', margin: 0 }}
                 />
-                <span>
-                  <strong>Include Memory Verses</strong>
-                  <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
-                    Add key verses to memorize each day
-                  </span>
-                </span>
-              </label>
-            </div>
 
-            <div style={{ marginTop: '16px' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                color: '#333',
-                fontSize: '16px',
-                cursor: 'pointer'
-              }}>
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={options.includeActionSteps}
                   onChange={(e) => setOptions({ ...options, includeActionSteps: e.target.checked })}
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    marginRight: '10px',
-                    cursor: 'pointer'
-                  }}
+                  label="Include Action Steps"
+                  description="Add practical application for each day"
+                  style={{ padding: 'var(--space-2)', margin: 0 }}
                 />
-                <span>
-                  <strong>Include Action Steps</strong>
-                  <span style={{ fontSize: '14px', color: '#666', display: 'block' }}>
-                    Add practical application for each day
-                  </span>
-                </span>
-              </label>
-            </div>
-
-            <button
-              onClick={generateStudy}
-              disabled={!youtubeLink || isGenerating}
-              style={{
-                width: '100%',
-                padding: '20px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: (!youtubeLink || isGenerating) ? 'not-allowed' : 'pointer',
-                marginTop: '32px',
-                background: (!youtubeLink || isGenerating) ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: (!youtubeLink || isGenerating) ? '#666' : 'white',
-                boxShadow: (!youtubeLink || isGenerating) ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              {isGenerating ? '🤖 Analyzing video & generating study...' : '✨ Generate Study Guide'}
-            </button>
-
-            {validationError && (
-              <div style={{
-                background: '#fee',
-                color: '#c00',
-                padding: '16px',
-                borderRadius: '12px',
-                marginTop: '16px',
-                fontSize: '14px',
-                border: '2px solid #fcc',
-              }}>
-                ❌ {validationError}
               </div>
-            )}
+
+              <Button
+                onClick={generateStudy}
+                disabled={!youtubeLink || isGenerating}
+                style={{ marginTop: 'var(--space-4)' }}
+              >
+                {isGenerating ? '🤖 Analyzing video & generating study...' : '✨ Generate Study Guide'}
+              </Button>
+
+              {validationError && (
+                <ErrorMessage style={{ marginTop: 'var(--space-4)' }}>
+                  {validationError}
+                </ErrorMessage>
+              )}
+            </Card>
           </div>
         </div>
-      </div>
       </>
     );
   }
@@ -828,47 +703,41 @@ function App() {
 
   // RESULT SCREEN (normal)
   return (
-    <div style={styles.gradientBg}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--gradient-background)',
+      padding: 'var(--space-6)',
+    }}>
       {overlay}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Success Banner */}
-          <div style={{
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            color: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)',
-          }}>
-            <span style={{ fontSize: '48px', marginRight: '16px' }}>✅</span>
+          <SuccessBanner style={{ marginBottom: 'var(--space-6)' }}>
             <div>
-              <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '4px' }}>
+              <h2 style={{
+                fontSize: 'clamp(24px, 3vw, 32px)',
+                fontWeight: '700',
+                marginBottom: 'var(--space-1)',
+                letterSpacing: '-0.01em',
+              }}>
                 5-Day Study Plan Generated!
               </h2>
-              <p style={{ fontSize: '16px', opacity: '0.9' }}>
+              <p style={{ fontSize: '16px', opacity: '0.95', fontWeight: '500' }}>
                 Click through the tabs to explore each day's generated study
               </p>
             </div>
-          </div>
+          </SuccessBanner>
 
         {/* Video & Summary Section */}
-        <div style={{
-          background: 'white',
-          borderRadius: '24px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          padding: '40px',
-          marginBottom: '24px',
-        }}>
+        <Card style={{ marginBottom: 'var(--space-6)' }}>
           {/* Video Embed */}
           <div style={{
             position: 'relative',
             paddingBottom: '56.25%',
             height: 0,
             overflow: 'hidden',
-            borderRadius: '16px',
-            marginBottom: '32px'
+            borderRadius: 'var(--radius-xl)',
+            marginBottom: 'var(--space-8)',
+            boxShadow: 'var(--shadow-md)',
           }}>
             <iframe
               src={`https://www.youtube.com/embed/${extractVideoId(youtubeLink)}`}
@@ -888,41 +757,45 @@ function App() {
 
           {/* Sermon Summary */}
           <div style={{
-            background: 'linear-gradient(135deg, #f8f7ff 0%, #e8e5ff 100%)',
-            padding: '32px',
-            borderRadius: '16px',
-            border: '2px solid #e0d4f7'
+            background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(88, 86, 214, 0.05) 100%)',
+            padding: 'var(--space-8)',
+            borderRadius: 'var(--radius-xl)',
+            border: '1px solid rgba(0, 122, 255, 0.1)',
           }}>
             <h3 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#667eea',
-              marginBottom: '16px',
-              fontFamily: "'Proxima Nova', sans-serif"
+              fontSize: '22px',
+              fontWeight: '600',
+              color: 'var(--color-primary)',
+              marginBottom: 'var(--space-4)',
+              letterSpacing: '-0.01em',
             }}>
               📝 Sermon Summary
             </h3>
             <p style={{
               fontSize: '16px',
-              lineHeight: '1.8',
-              color: '#333',
-              fontFamily: "'Poppins', sans-serif"
+              lineHeight: '1.7',
+              color: 'var(--color-gray-700)',
+              fontWeight: '400',
             }}>
               This sermon explores the themes of {dailyStudies[0]?.passage || 'biblical teaching'} and
               focuses on spiritual growth through {dailyStudies[0]?.title?.toLowerCase() || 'faith and perseverance'}.
               The teaching emphasizes practical application and deep scriptural understanding.
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Day Tabs */}
         <div style={{
-          background: 'white',
-          borderRadius: '24px 24px 0 0',
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(var(--blur-md))',
+          WebkitBackdropFilter: 'blur(var(--blur-md))',
+          borderRadius: 'var(--radius-2xl) var(--radius-2xl) 0 0',
           padding: '0',
           display: 'flex',
           overflowX: 'auto',
-          boxShadow: '0 -5px 20px rgba(0,0,0,0.1)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid rgba(0, 0, 0, 0.06)',
+          borderBottom: 'none',
         }}>
           {dailyStudies.map((study) => (
             <button
@@ -930,17 +803,30 @@ function App() {
               onClick={() => setActiveDay(study.day)}
               style={{
                 flex: '1',
-                minWidth: '150px',
-                padding: '20px 24px',
-                fontSize: '18px',
-                fontWeight: 'bold',
+                minWidth: '120px',
+                padding: 'var(--space-4) var(--space-6)',
+                fontSize: '16px',
+                fontWeight: '600',
                 border: 'none',
-                borderBottom: activeDay === study.day ? '4px solid #667eea' : '4px solid transparent',
-                background: activeDay === study.day ? '#f8f7ff' : 'white',
-                color: activeDay === study.day ? '#667eea' : '#666',
+                borderBottom: activeDay === study.day ? '3px solid var(--color-primary)' : '3px solid transparent',
+                background: activeDay === study.day ? 'rgba(0, 122, 255, 0.08)' : 'transparent',
+                color: activeDay === study.day ? 'var(--color-primary)' : 'var(--color-gray-600)',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                borderRadius: activeDay === study.day ? '12px 12px 0 0' : '0',
+                transition: 'all var(--transition-fast)',
+                borderRadius: activeDay === study.day ? 'var(--radius-lg) var(--radius-lg) 0 0' : '0',
+                letterSpacing: '-0.01em',
+              }}
+              onMouseEnter={(e) => {
+                if (activeDay !== study.day) {
+                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.03)';
+                  e.currentTarget.style.color = 'var(--color-gray-900)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeDay !== study.day) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-gray-600)';
+                }
               }}
             >
               Day {study.day}
@@ -949,49 +835,64 @@ function App() {
         </div>
 
         {/* Study Content Card */}
-        <div style={{
-          background: 'white',
-          borderRadius: '0 0 24px 24px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          padding: '40px',
-          marginBottom: '24px',
+        <Card style={{
+          borderRadius: '0 0 var(--radius-2xl) var(--radius-2xl)',
+          marginBottom: 'var(--space-6)',
+          borderTop: '1px solid rgba(0, 0, 0, 0.06)',
         }}>
           {/* Day Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #f8f7ff 0%, #e8e5ff 100%)',
-            padding: '24px',
-            borderRadius: '16px',
-            marginBottom: '32px',
+            background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(88, 86, 214, 0.05) 100%)',
+            padding: 'var(--space-6)',
+            borderRadius: 'var(--radius-xl)',
+            marginBottom: 'var(--space-8)',
+            border: '1px solid rgba(0, 122, 255, 0.1)',
           }}>
-            <h2 style={{ fontSize: '32px', fontWeight: 'bold', color: '#667eea', marginBottom: '8px', wordBreak: 'break-word' }}>
+            <h2 style={{
+              fontSize: 'clamp(24px, 3vw, 32px)',
+              fontWeight: '700',
+              color: 'var(--color-primary)',
+              marginBottom: 'var(--space-3)',
+              wordBreak: 'break-word',
+              letterSpacing: '-0.02em',
+            }}>
               {currentStudy.title}
             </h2>
             {currentStudy.date && (
-              <p style={{ fontSize: '16px', color: '#764ba2', marginBottom: '4px' }}>
+              <p style={{
+                fontSize: '15px',
+                color: 'var(--color-gray-600)',
+                marginBottom: 'var(--space-1)',
+                fontWeight: '500',
+              }}>
                 📅 {currentStudy.date}
               </p>
             )}
-            <p style={{ fontSize: '16px', color: '#764ba2' }}>
+            <p style={{
+              fontSize: '15px',
+              color: 'var(--color-gray-600)',
+              fontWeight: '500',
+            }}>
               📖 {currentStudy.passage}
             </p>
           </div>
 
           {/* Study Content */}
           <div style={{
-            background: 'linear-gradient(135deg, #f3e7ff 0%, #e0f2fe 100%)',
-            padding: '32px',
-            borderRadius: '16px',
-            border: '2px solid #e0d4f7',
+            background: 'var(--color-gray-50)',
+            padding: 'var(--space-8)',
+            borderRadius: 'var(--radius-xl)',
+            border: '1px solid var(--color-gray-100)',
             maxHeight: '500px',
             overflowY: 'auto',
-            marginBottom: '32px',
+            marginBottom: 'var(--space-8)',
           }}
           ref={studyContentRef}>
             <div
               style={{
-                color: '#333',
-                fontFamily: 'inherit',
-                lineHeight: '1.8',
+                color: 'var(--color-gray-900)',
+                fontFamily: 'var(--font-sans)',
+                lineHeight: '1.7',
                 fontSize: '16px',
               }}
               dangerouslySetInnerHTML={{
@@ -1004,64 +905,32 @@ function App() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '12px',
-            marginBottom: '24px',
+            gap: 'var(--space-3)',
+            marginBottom: 'var(--space-6)',
           }}>
-            <button
+            <Button
               onClick={() => downloadDayStudy('txt')}
-              style={{
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
-                transition: 'transform 0.3s ease',
-              }}
+              variant="success"
             >
               📄 Download Text
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => downloadDayStudy('word')}
-              style={{
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)',
-                transition: 'transform 0.3s ease',
-              }}
+              variant="primary"
             >
               📘 Download Word
-            </button>
+            </Button>
           </div>
 
-          <div style={{ marginBottom: '32px' }}>
-            <button
+          <div style={{ marginBottom: 'var(--space-8)' }}>
+            <Button
               onClick={downloadFullStudy}
-              style={{
-                padding: '16px 24px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.35)',
-                transition: 'transform 0.3s ease',
-              }}
+              variant="primary"
+              style={{ width: 'auto', paddingLeft: 'var(--space-8)', paddingRight: 'var(--space-8)' }}
             >
               📘 Download Full Study (Word)
-            </button>
+            </Button>
           </div>
 
           {/* Share Buttons */}
@@ -1157,32 +1026,21 @@ function App() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '16px',
-            marginTop: '24px'
+            gap: 'var(--space-4)',
+            marginTop: 'var(--space-6)',
           }}>
-            <button
+            <Button
               onClick={() => {
                 setActiveDay(Math.max(1, activeDay - 1));
                 logEvent('Navigation', 'Previous_Day', `Day ${activeDay - 1}`);
               }}
               disabled={activeDay === 1}
-              style={{
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: activeDay === 1 ? 'not-allowed' : 'pointer',
-                background: activeDay === 1 ? '#e0e0e0' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: activeDay === 1 ? '#999' : 'white',
-                boxShadow: activeDay === 1 ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
-                transition: 'transform 0.3s ease',
-              }}
+              variant="primary"
             >
               ← Previous Day
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => {
                 logEvent('Navigation', 'New_Study', 'From Results Page');
                 setStep('input');
@@ -1190,45 +1048,23 @@ function App() {
                 setActiveDay(1);
                 setDailyStudies([]);
               }}
-              style={{
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(107, 114, 128, 0.4)',
-                transition: 'transform 0.3s ease',
-              }}
+              variant="secondary"
             >
               🔄 New Study
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => {
                 setActiveDay(Math.min(dailyStudies.length, activeDay + 1));
                 logEvent('Navigation', 'Next_Day', `Day ${activeDay + 1}`);
               }}
               disabled={activeDay === dailyStudies.length}
-              style={{
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                border: 'none',
-                borderRadius: '12px',
-                cursor: activeDay === dailyStudies.length ? 'not-allowed' : 'pointer',
-                background: activeDay === dailyStudies.length ? '#e0e0e0' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: activeDay === dailyStudies.length ? '#999' : 'white',
-                boxShadow: activeDay === dailyStudies.length ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)',
-                transition: 'transform 0.3s ease',
-              }}
+              variant="primary"
             >
               Next Day →
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
