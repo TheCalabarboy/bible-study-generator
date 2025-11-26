@@ -22,11 +22,7 @@ export default function Navigation() {
   return (
     <nav
       style={{
-        background: 'rgba(255, 255, 255, 0.86)',
-        backdropFilter: 'blur(var(--blur-lg))',
-        WebkitBackdropFilter: 'blur(var(--blur-lg))',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-        boxShadow: 'var(--shadow-xs)',
+        background: 'transparent',
         padding: 'var(--space-2) 0',
         position: 'sticky',
         top: 0,
@@ -37,12 +33,18 @@ export default function Navigation() {
       <div
         style={{
           maxWidth: '1400px',
-          margin: '0 auto',
-          padding: 'var(--space-3) var(--space-8)',
+          margin: 'var(--space-4) auto 0',
+          padding: 'var(--space-2) var(--space-3)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: 'var(--space-8)',
+          background: 'rgba(255, 255, 255, 0.86)',
+          backdropFilter: 'blur(var(--blur-lg))',
+          WebkitBackdropFilter: 'blur(var(--blur-lg))',
+          border: '1px solid rgba(0, 0, 0, 0.06)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          borderRadius: '999px',
         }}
       >
         {/* Left: Logo / Home */}

@@ -5,6 +5,7 @@ backend/node_modules/
 .env.local
 .env.production
 frontend/dist/
+dist/
 frontend/build/
 backend/dist/
 .DS_Store

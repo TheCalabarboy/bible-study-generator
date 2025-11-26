@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import VideoModal from '../components/VideoModal';
+import HeroReading from '../assets/hero-reading.jpg';
 
 export default function HomePage() {
   const introVideoId = import.meta.env.VITE_INTRO_VIDEO_ID || 'IwooZSKSDpg';
@@ -13,7 +14,7 @@ export default function HomePage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'var(--gradient-hero)',
+      background: 'linear-gradient(180deg, #4a6bc9 0%, #6f8fda 45%, #e8f0ff 100%)',
       position: 'relative',
       overflow: 'hidden',
     }}>
@@ -21,8 +22,8 @@ export default function HomePage() {
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'var(--gradient-warm-cool)',
-        opacity: 0.15,
+        background: 'radial-gradient(120% 90% at 50% 15%, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0) 60%)',
+        opacity: 0.9,
         pointerEvents: 'none',
       }} />
 
@@ -33,7 +34,7 @@ export default function HomePage() {
         position: 'relative',
         zIndex: 1,
       }}>
-        {/* Hero Section - DocShield Style */}
+        {/* Hero Section - DocShield match */}
         <div style={{
           textAlign: 'center',
           marginBottom: 'var(--space-100)',
@@ -41,42 +42,34 @@ export default function HomePage() {
           transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         }}>
-          {/* Icon with subtle animation */}
-          <div style={{
-            fontSize: '72px',
-            marginBottom: 'var(--space-6)',
-            animation: 'float 3s ease-in-out infinite',
-          }}>📖</div>
-
           <h1 style={{
-            fontSize: 'clamp(48px, 7vw, 80px)',
-            fontWeight: '400',
-            marginBottom: 'var(--space-8)',
-            color: 'var(--color-gray-900)',
+            fontSize: 'clamp(44px, 7vw, 76px)',
+            fontWeight: 400,
+            marginBottom: 'var(--space-4)',
+            color: 'white',
             letterSpacing: '-0.02em',
             lineHeight: '1.1',
           }}>
-            Transform Sermons into<br />Daily Spiritual Growth
+            The fastest way to turn sermons<br />into daily Bible studies
           </h1>
 
           <p style={{
-            fontSize: 'clamp(18px, 2.5vw, 24px)',
-            lineHeight: '1.6',
-            color: 'var(--color-gray-700)',
-            maxWidth: '800px',
-            margin: '0 auto var(--space-71)',
-            fontWeight: '400',
+            fontSize: 'clamp(18px, 2.5vw, 22px)',
+            lineHeight: 1.6,
+            color: 'rgba(255,255,255,0.9)',
+            maxWidth: '760px',
+            margin: '0 auto var(--space-6)',
+            fontWeight: 400,
           }}>
-            Turn any Christian sermon or teaching into a comprehensive 5-day Bible study plan.
-            Deepen your faith, explore Scripture, and apply biblical truth to your life.
+            70%+ of your plan pre-filled from any sermon link. Generate, personalize, and share a five-day Scripture study in minutes.
           </p>
 
-          {/* Primary CTA - DocShield Style */}
           <div style={{
             display: 'flex',
             gap: 'var(--space-4)',
             justifyContent: 'center',
             flexWrap: 'wrap',
+            marginBottom: 'var(--space-10)',
           }}>
             <Link
               to="/generate"
@@ -84,14 +77,15 @@ export default function HomePage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 'var(--space-4) var(--space-8)',
+                padding: '16px 28px',
                 fontSize: '17px',
-                fontWeight: '600',
-                color: 'var(--color-gray-900)',
-                background: 'var(--color-gray-100)',
-                borderRadius: 'var(--radius-md)',
+                fontWeight: 600,
+                color: '#0f172a',
+                background: 'white',
+                borderRadius: '999px',
                 textDecoration: 'none',
-                border: '1px solid var(--color-gray-200)',
+                border: '1px solid rgba(255,255,255,0.8)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
                 transition: 'opacity var(--transition-fast)',
                 cursor: 'pointer',
               }}
@@ -102,7 +96,7 @@ export default function HomePage() {
                 e.target.style.opacity = '1';
               }}
             >
-              Get Started
+              Get started
             </Link>
 
             <Link
@@ -111,26 +105,50 @@ export default function HomePage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 'var(--space-4) var(--space-8)',
+                padding: '16px 26px',
                 fontSize: '17px',
-                fontWeight: '600',
-                color: 'var(--color-gray-700)',
-                background: 'transparent',
-                borderRadius: 'var(--radius-md)',
+                fontWeight: 600,
+                color: 'white',
+                background: 'linear-gradient(135deg, #3b5fae 0%, #6f8fda 100%)',
+                borderRadius: '999px',
                 textDecoration: 'none',
-                border: '1px solid var(--color-gray-300)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
                 transition: 'opacity var(--transition-fast)',
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.target.style.opacity = '0.7';
+                e.target.style.opacity = '0.85';
               }}
               onMouseLeave={(e) => {
                 e.target.style.opacity = '1';
               }}
             >
-              Browse Topics
+              See how it works
             </Link>
+          </div>
+
+          <div style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            position: 'relative',
+            marginTop: 'var(--space-6)',
+          }}>
+            <div style={{
+              width: 'min(520px, 90vw)',
+              borderRadius: '28px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 70px rgba(0,0,0,0.25)',
+              border: '6px solid rgba(255,255,255,0.65)',
+              background: 'rgba(255,255,255,0.9)',
+            }}>
+              <img
+                src={HeroReading}
+                alt="Young woman reading the Bible"
+                style={{ width: '100%', display: 'block' }}
+              />
+            </div>
           </div>
         </div>
 
