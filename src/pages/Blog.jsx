@@ -5,72 +5,78 @@ import { Link } from 'react-router-dom';
 export default function BlogListPage() {
   // ---------- styles (defined here so nothing is "not defined") ----------
   const pageWrap = {
+    position: 'relative',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    padding: '40px 20px',
+    background: 'var(--gradient-hero)',
+    padding: 'var(--space-100) var(--space-12)',
+    overflow: 'hidden',
   };
 
   const container = {
-    maxWidth: '1000px',
+    position: 'relative',
+    maxWidth: '1200px',
     margin: '0 auto',
-    background: 'white',
+    background: 'rgba(255,255,255,0.94)',
     borderRadius: '24px',
-    padding: '50px',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+    padding: 'var(--space-10)',
+    boxShadow: 'var(--shadow-lg)',
+    border: '1px solid rgba(0,0,0,0.05)',
   };
 
   const heading = {
-    fontSize: '42px',
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: '10px',
-    lineHeight: 1.2,
+    fontSize: 'clamp(36px, 4vw, 48px)',
+    fontWeight: 400,
+    color: 'var(--color-gray-900)',
+    marginBottom: 'var(--space-2)',
+    lineHeight: 1.1,
   };
 
   const sub = {
-    color: '#666',
-    marginBottom: '30px',
+    color: 'var(--color-gray-600)',
+    marginBottom: 'var(--space-6)',
+    fontSize: 16,
   };
 
   const grid = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-    gap: '20px',
+    gap: 'var(--space-6)',
   };
 
   const cardStyle = {
     display: 'block',
     textDecoration: 'none',
-    background: '#f8f7ff',
-    border: '2px solid #ece9ff',
-    borderRadius: '16px',
-    padding: '22px',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    color: '#333',
+    background: 'rgba(255,255,255,0.9)',
+    border: '1px solid rgba(0,0,0,0.06)',
+    borderRadius: '18px',
+    padding: 'var(--space-5)',
+    transition: 'opacity var(--transition-fast)',
+    color: 'var(--color-gray-900)',
+    boxShadow: 'var(--shadow-sm)',
   };
 
   const cardTitle = {
     fontSize: '20px',
     fontWeight: 700,
     marginBottom: '8px',
-    color: '#333',
+    color: 'var(--color-gray-900)',
   };
 
   const cardExcerpt = {
     fontSize: '14px',
-    color: '#555',
-    marginBottom: '14px',
+    color: 'var(--color-gray-600)',
+    marginBottom: 'var(--space-3)',
     lineHeight: 1.6,
   };
 
   const cardMeta = {
     display: 'inline-block',
-    background: '#eae7ff',
-    color: '#667eea',
+    background: 'rgba(0, 122, 255, 0.08)',
+    color: 'var(--color-primary)',
     fontSize: '12px',
     fontWeight: 700,
     padding: '6px 10px',
-    borderRadius: '8px',
+    borderRadius: '10px',
   };
 
   // ---------- posts to show ----------
@@ -114,6 +120,13 @@ export default function BlogListPage() {
 
   return (
     <div style={pageWrap}>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'var(--gradient-warm-cool)',
+        opacity: 0.12,
+        pointerEvents: 'none',
+      }} />
       <section style={container}>
         <h1 style={heading}>Blog</h1>
         <p style={sub}>
@@ -128,12 +141,10 @@ export default function BlogListPage() {
               to={p.to}
               style={cardStyle}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.12)';
+                e.currentTarget.style.opacity = '0.85';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'none';
-                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.opacity = '1';
               }}
             >
               <div style={cardTitle}>{p.title}</div>

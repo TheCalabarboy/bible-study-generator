@@ -36,109 +36,131 @@ export default function Feedback() {
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '60px 20px' }}>
-      <h1 style={{ fontSize: 36, color: '#4b5563', marginBottom: 16 }}>Share Your Feedback</h1>
-      <p style={{ fontSize: 16, color: '#6b7280', marginBottom: 32, lineHeight: 1.7 }}>
-        We’d love to hear how SermonDive is serving you or ideas for improvement. Please fill out the quick form below
-        and we’ll receive it at <strong style={{ color: '#667eea' }}>{MAILTO}</strong>.
-      </p>
+    <div style={{
+      position: 'relative',
+      minHeight: '100vh',
+      background: 'var(--gradient-hero)',
+      padding: 'var(--space-100) var(--space-12)',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'var(--gradient-warm-cool)',
+        opacity: 0.12,
+        pointerEvents: 'none',
+      }} />
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          background: 'white',
-          borderRadius: 16,
-          padding: 32,
-          boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
-          display: 'grid',
-          gap: 24,
-        }}
-      >
-        <div>
-          <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#4b5563', marginBottom: 8 }}>
-            Name
-          </label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={updateField('name')}
-            placeholder="Optional"
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: 12,
-              border: '1px solid #d1d5db',
-              fontSize: 16,
-            }}
-          />
-        </div>
+      <div style={{ position: 'relative', maxWidth: 820, margin: '0 auto' }}>
+        <h1 style={{ fontSize: 'clamp(36px, 4vw, 48px)', color: 'var(--color-gray-900)', marginBottom: 'var(--space-3)', fontWeight: 400 }}>
+          Share Your Feedback
+        </h1>
+        <p style={{ fontSize: 17, color: 'var(--color-gray-600)', marginBottom: 'var(--space-6)', lineHeight: 1.7 }}>
+          We’d love to hear how SermonDive is serving you or ideas for improvement. Please fill out the quick form below
+          and we’ll receive it at <strong style={{ color: 'var(--color-primary)' }}>{MAILTO}</strong>.
+        </p>
 
-        <div>
-          <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#4b5563', marginBottom: 8 }}>
-            Email
-          </label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={updateField('email')}
-            placeholder="Optional, if you’d like a reply"
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: 12,
-              border: '1px solid #d1d5db',
-              fontSize: 16,
-            }}
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#4b5563', marginBottom: 8 }}>
-            Your Message *
-          </label>
-          <textarea
-            value={form.message}
-            onChange={updateField('message')}
-            rows="6"
-            required
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              borderRadius: 12,
-              border: '1px solid #d1d5db',
-              fontSize: 16,
-              resize: 'vertical',
-            }}
-          />
-        </div>
-
-        <button
-          type="submit"
+        <form
+          onSubmit={handleSubmit}
           style={{
-            justifySelf: 'start',
-            padding: '14px 28px',
-            borderRadius: 999,
-            border: 'none',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: 'pointer',
-            boxShadow: '0 15px 30px rgba(102, 126, 234, 0.25)',
-            transition: 'transform 0.2s ease',
+            background: 'rgba(255,255,255,0.94)',
+            borderRadius: 20,
+            padding: 'var(--space-8)',
+            boxShadow: 'var(--shadow-lg)',
+            display: 'grid',
+            gap: 'var(--space-6)',
+            border: '1px solid rgba(0,0,0,0.05)',
           }}
-          onMouseEnter={(event) => { event.currentTarget.style.transform = 'translateY(-2px)'; }}
-          onMouseLeave={(event) => { event.currentTarget.style.transform = 'translateY(0)'; }}
         >
-          Send feedback
-        </button>
+          <div>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-gray-700)', marginBottom: 8 }}>
+              Name
+            </label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={updateField('name')}
+              placeholder="Optional"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: 14,
+                border: '1px solid var(--color-gray-200)',
+                fontSize: 16,
+                background: 'white',
+              }}
+            />
+          </div>
 
-        {status && (
-          <p style={{ fontSize: 14, color: '#4b5563' }}>
-            {status}
-          </p>
-        )}
-      </form>
+          <div>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-gray-700)', marginBottom: 8 }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={updateField('email')}
+              placeholder="Optional, if you’d like a reply"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: 14,
+                border: '1px solid var(--color-gray-200)',
+                fontSize: 16,
+                background: 'white',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-gray-700)', marginBottom: 8 }}>
+              Your Message *
+            </label>
+            <textarea
+              value={form.message}
+              onChange={updateField('message')}
+              rows="6"
+              required
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: 14,
+                border: '1px solid var(--color-gray-200)',
+                fontSize: 16,
+                resize: 'vertical',
+                background: 'white',
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              justifySelf: 'start',
+              padding: 'var(--space-3) var(--space-6)',
+              borderRadius: 'var(--radius-full)',
+              border: 'none',
+              background: 'var(--gradient-primary)',
+              color: 'white',
+              fontWeight: 600,
+              fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'opacity var(--transition-fast)',
+            }}
+            onMouseEnter={(event) => { event.currentTarget.style.opacity = '0.85'; }}
+            onMouseLeave={(event) => { event.currentTarget.style.opacity = '1'; }}
+          >
+            Send feedback
+          </button>
+
+          {status && (
+            <p style={{ fontSize: 14, color: 'var(--color-gray-700)' }}>
+              {status}
+            </p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

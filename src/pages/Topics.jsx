@@ -294,17 +294,31 @@ export default function Topics() {
       />
       <div
         ref={pageRef}
-        style={{ minHeight: 'calc(100vh - 200px)', padding: '40px 20px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-        <div style={{
-          maxWidth: 900, margin: '0 auto',
-          background: 'white', borderRadius: 16, padding: 24,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
+        style={{
+          position: 'relative',
+          minHeight: 'calc(100vh - 200px)',
+          padding: 'var(--space-100) var(--space-12)',
+          background: 'var(--gradient-hero)',
+          overflow: 'hidden',
         }}>
-          <h1 style={{ fontSize: 32, marginBottom: 8, color: '#4b4b4b' }}>
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'var(--gradient-warm-cool)',
+          opacity: 0.12,
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'relative',
+          maxWidth: 980, margin: '0 auto',
+          background: 'rgba(255,255,255,0.94)', borderRadius: 20, padding: 'var(--space-8)',
+          boxShadow: 'var(--shadow-lg)',
+          border: '1px solid rgba(0,0,0,0.05)'
+        }}>
+          <h1 style={{ fontSize: 'clamp(32px, 4vw, 44px)', marginBottom: 8, color: 'var(--color-gray-900)', fontWeight: 400 }}>
             Topical Study
           </h1>
-          <p style={{ color: '#666', marginBottom: 16 }}>
+          <p style={{ color: 'var(--color-gray-600)', marginBottom: 16, lineHeight: 1.7 }}>
             Paste any topic, passage, question, or even a full block of text and we’ll craft a 5-day, theologically grounded study plan.
           </p>
 
@@ -319,7 +333,7 @@ export default function Topics() {
                 padding: 14,
                 fontSize: 16,
                 lineHeight: 1.6,
-                border: '2px solid #e0e0e0',
+                border: '1px solid var(--color-gray-200)',
                 borderRadius: 12,
                 outline: 'none',
                 resize: 'vertical',
@@ -332,16 +346,18 @@ export default function Topics() {
                 disabled={isGenerating || isRecording}
                 style={{
                   padding: '12px 24px',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: 16,
                   border: 'none',
-                  borderRadius: 10,
+                  borderRadius: 999,
                   cursor: 'pointer',
-                  background: (isGenerating || isRecording) ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: (isGenerating || isRecording) ? '#ccc' : 'var(--gradient-primary)',
                   color: 'white',
-                  boxShadow: '0 10px 25px rgba(102, 126, 234, 0.35)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'opacity var(--transition-fast)'
                 }}
+                onMouseEnter={(e) => { if (!isGenerating && !isRecording) e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
               >
                 {isGenerating ? 'Generating…' : 'Generate'}
               </button>
@@ -357,8 +373,8 @@ export default function Topics() {
                     borderRadius: '50%',
                     border: 'none',
                     cursor: 'pointer',
-                    background: isRecording ? '#ef4444' : '#f3f4f6',
-                    color: isRecording ? 'white' : '#4b5563',
+                    background: isRecording ? '#ef4444' : 'var(--color-gray-50)',
+                    color: isRecording ? 'white' : 'var(--color-gray-700)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -377,13 +393,13 @@ export default function Topics() {
 
           {hasStudies && (
             <div>
-              <h2 style={{ fontSize: 26, marginBottom: 8, color: '#3f3f46' }}>
+              <h2 style={{ fontSize: 26, marginBottom: 8, color: 'var(--color-gray-900)', fontWeight: 600 }}>
                 Your {studies.length}-Day Topical Study
               </h2>
               {trimmedTopic && (
-                <p style={{ color: '#6b7280', marginBottom: 20 }}>
+                <p style={{ color: 'var(--color-gray-600)', marginBottom: 20 }}>
                   Focus:{' '}
-                  <span style={{ color: '#4c1d95', fontWeight: 700 }}>
+                  <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
                     {focusLabel}
                   </span>
                 </p>
@@ -394,8 +410,8 @@ export default function Topics() {
                   style={{
                     ...downloadButtonBase,
                     padding: '14px 24px',
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                    boxShadow: '0 6px 18px rgba(59, 130, 246, 0.35)',
+                    background: 'var(--gradient-primary)',
+                    boxShadow: 'var(--shadow-sm)',
                   }}
                 >
                   📘 Download Full Study (Word)
@@ -412,34 +428,34 @@ export default function Topics() {
                     <div
                       key={safeKey}
                       style={{
-                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)',
-                        border: '1px solid rgba(102, 126, 234, 0.25)',
+                        background: 'rgba(255,255,255,0.9)',
+                        border: '1px solid rgba(0,0,0,0.06)',
                         borderRadius: 18,
                         padding: 24,
                         marginBottom: 20,
-                        boxShadow: '0 18px 35px rgba(15, 23, 42, 0.08)'
+                        boxShadow: 'var(--shadow-md)'
                       }}
                     >
                       <div style={{ marginBottom: 18 }}>
                         <span style={{
                           display: 'inline-block',
-                          background: 'rgba(255, 255, 255, 0.9)',
-                          color: '#4c1d95',
+                          background: 'rgba(0, 122, 255, 0.08)',
+                          color: 'var(--color-primary)',
                           padding: '6px 14px',
                           borderRadius: '999px',
                           fontWeight: 600,
                           fontSize: 14,
                           letterSpacing: '0.08em',
                           textTransform: 'uppercase',
-                          boxShadow: '0 6px 15px rgba(124, 58, 237, 0.2)'
+                          boxShadow: 'var(--shadow-sm)'
                         }}>
                           Day {dayNumber}
                         </span>
-                        <h3 style={{ margin: '12px 0 6px 0', color: '#312e81', fontSize: 22, wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        <h3 style={{ margin: '12px 0 6px 0', color: 'var(--color-gray-900)', fontSize: 22, wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                           {study.title}
                         </h3>
                         {study.passage && (
-                          <p style={{ color: '#5b21b6', fontWeight: 600 }}>
+                          <p style={{ color: 'var(--color-gray-700)', fontWeight: 600 }}>
                             📖 {study.passage}
                           </p>
                         )}
@@ -449,12 +465,12 @@ export default function Topics() {
                           background: 'rgba(255, 255, 255, 0.92)',
                           borderRadius: 12,
                           padding: '18px 22px',
-                          border: '1px solid rgba(148, 163, 184, 0.25)',
+                          border: '1px solid rgba(0,0,0,0.06)',
                           boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.6)',
                           maxHeight: '360px',
                           overflowY: 'auto',
                           lineHeight: '1.8',
-                          color: '#2f2f2f'
+                          color: 'var(--color-gray-800)'
                         }}
                         dangerouslySetInnerHTML={{ __html: renderStudyHTML(studyContent) }}
                       />
@@ -463,7 +479,10 @@ export default function Topics() {
                           onClick={() => downloadStudy(study, index, 'txt')}
                           style={{
                             ...downloadButtonBase,
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                            background: 'var(--color-gray-100)',
+                            color: 'var(--color-gray-900)',
+                            border: '1px solid var(--color-gray-200)',
+                            boxShadow: 'none'
                           }}
                         >
                           📄 Day {dayNumber} Text
@@ -472,7 +491,7 @@ export default function Topics() {
                           onClick={() => downloadStudy(study, index, 'word')}
                           style={{
                             ...downloadButtonBase,
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                            background: 'var(--gradient-primary)'
                           }}
                         >
                           📘 Day {dayNumber} Word

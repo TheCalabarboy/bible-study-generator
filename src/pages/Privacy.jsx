@@ -7,42 +7,54 @@ export default function Privacy() {
     <>
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '40px 20px',
+        position: 'relative',
+        background: 'var(--gradient-hero)',
+        padding: 'var(--space-100) var(--space-12)',
+        overflow: 'hidden',
       }}>
         <div style={{
-          maxWidth: '900px',
+          position: 'absolute',
+          inset: 0,
+          background: 'var(--gradient-warm-cool)',
+          opacity: 0.12,
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'relative',
+          maxWidth: '1200px',
           margin: '0 auto',
-          background: 'white',
+          background: 'rgba(255,255,255,0.94)',
           borderRadius: '24px',
-          padding: '50px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          padding: 'var(--space-12)',
+          boxShadow: 'var(--shadow-lg)',
+          border: '1px solid rgba(0,0,0,0.05)',
         }}>
           <img 
             src={Logo} 
             alt="SermonDive Logo" 
             style={{ 
-              width: '150px', 
+              width: '140px', 
               height: 'auto',
-              margin: '0 auto 30px',
+              margin: '0 auto var(--space-6)',
               display: 'block'
             }} 
           />
           
           <h1 style={{ 
-            fontSize: '36px', 
-            color: '#667eea', 
-            marginBottom: '10px', 
-            textAlign: 'center' 
+            fontSize: 'clamp(36px, 4vw, 48px)', 
+            color: 'var(--color-gray-900)', 
+            marginBottom: 'var(--space-2)', 
+            textAlign: 'center',
+            fontWeight: 400,
           }}>
             Privacy Policy
           </h1>
           
           <p style={{ 
             textAlign: 'center', 
-            color: '#666', 
-            marginBottom: '40px',
-            fontSize: '14px'
+            color: 'var(--color-gray-600)', 
+            marginBottom: 'var(--space-8)',
+            fontSize: '15px'
           }}>
             Last Updated: {new Date().toLocaleDateString('en-US', { 
               month: 'long', 
@@ -53,7 +65,7 @@ export default function Privacy() {
           
           <div style={{ 
             lineHeight: '1.8', 
-            color: '#333', 
+            color: 'var(--color-gray-700)', 
             fontSize: '16px' 
           }}>
             {/* Introduction */}
@@ -475,20 +487,20 @@ export default function Privacy() {
               </div>
             </section>
 
-            {/* Consent */}
-            <section style={{ 
-              marginTop: '40px',
-              padding: '20px',
-              background: '#e8e5ff',
-              borderRadius: '12px',
-              border: '2px solid #667eea'
-            }}>
-              <p style={{ textAlign: 'center', fontWeight: 'bold', color: '#667eea' }}>
-                By using SermonDive, you acknowledge that you have read and understood this 
-                Privacy Policy and agree to its terms.
-              </p>
-            </section>
-          </div>
+          {/* Consent */}
+          <section style={{ 
+            marginTop: '40px',
+            padding: '20px',
+            background: 'rgba(0,0,0,0.03)',
+            borderRadius: '12px',
+            border: '1px solid rgba(0,0,0,0.08)'
+          }}>
+            <p style={{ textAlign: 'center', fontWeight: 600, color: 'var(--color-gray-800)' }}>
+              By using SermonDive, you acknowledge that you have read and understood this 
+              Privacy Policy and agree to its terms.
+            </p>
+          </section>
+        </div>
           
           {/* Back to Home Button */}
           <div style={{ textAlign: 'center', marginTop: '40px' }}>
@@ -496,14 +508,18 @@ export default function Privacy() {
               to="/"
               style={{
                 display: 'inline-block',
-                padding: '15px 30px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: 'var(--space-3) var(--space-6)',
+                background: 'var(--gradient-primary)',
                 color: 'white',
                 textDecoration: 'none',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
+                borderRadius: 'var(--radius-full)',
+                fontWeight: 600,
+                fontSize: '15px',
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'opacity var(--transition-fast)',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
             >
               ← Back to Home
             </Link>

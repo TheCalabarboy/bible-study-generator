@@ -159,14 +159,27 @@ export default function Quiz() {
   const accuracy = questions.length ? Math.round((correctCount / questions.length) * 100) : 0;
 
   return (
-    <div style={{ background: '#f1f5f9', minHeight: '100vh', padding: '60px 20px' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto' }}>
+    <div style={{
+      position: 'relative',
+      background: 'var(--gradient-hero)',
+      minHeight: '100vh',
+      padding: 'var(--space-100) var(--space-12)',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'var(--gradient-warm-cool)',
+        opacity: 0.12,
+        pointerEvents: 'none',
+      }} />
+      <div style={{ position: 'relative', maxWidth: 960, margin: '0 auto' }}>
         <header style={{ marginBottom: 32, textAlign: 'center' }}>
-          <p style={{ color: '#6366f1', fontWeight: 600, letterSpacing: 2, marginBottom: 8 }}>
+          <p style={{ color: 'var(--color-primary)', fontWeight: 600, letterSpacing: 2, marginBottom: 8 }}>
             SERMONDIVE QUIZ LAB
           </p>
-          <h1 style={{ fontSize: 42, color: '#1f2937', marginBottom: 12 }}>Bible Knowledge Challenge</h1>
-          <p style={{ color: '#475569', fontSize: 16, lineHeight: 1.7 }}>
+          <h1 style={{ fontSize: 'clamp(34px, 4vw, 48px)', color: 'var(--color-gray-900)', marginBottom: 12, fontWeight: 400 }}>Bible Knowledge Challenge</h1>
+          <p style={{ color: 'var(--color-gray-600)', fontSize: 16, lineHeight: 1.7 }}>
             Choose a difficulty, advance through ten levels, and tackle twenty fresh questions per
             level. Your mission: test and stretch your understanding of Scripture.
           </p>
@@ -174,11 +187,12 @@ export default function Quiz() {
 
         <section
           style={{
-            background: 'white',
+            background: 'rgba(255,255,255,0.94)',
             borderRadius: 20,
             padding: 32,
-            boxShadow: '0 20px 45px rgba(15,23,42,0.08)',
+            boxShadow: 'var(--shadow-lg)',
             marginBottom: 32,
+            border: '1px solid rgba(0,0,0,0.05)',
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

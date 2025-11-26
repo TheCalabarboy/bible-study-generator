@@ -3,82 +3,136 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer style={{
-      background: 'rgba(102, 126, 234, 0.1)',
-      padding: '40px 20px',
-      marginTop: '60px',
-      borderTop: '1px solid rgba(102, 126, 234, 0.2)',
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '30px',
-      }}>
+    <footer
+      style={{
+        position: 'relative',
+        background: 'var(--gradient-hero)',
+        padding: 'var(--space-12) var(--space-6)',
+        marginTop: 'var(--space-100)',
+        borderTop: '1px solid rgba(0, 0, 0, 0.05)',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'var(--gradient-warm-cool)',
+          opacity: 0.12,
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'relative',
+          maxWidth: '1400px',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: 'var(--space-8)',
+          alignItems: 'flex-start',
+        }}
+      >
         <div>
-          <h3 style={{ color: '#667eea', fontSize: '18px', marginBottom: '15px' }}>
+          <h3 style={{ color: 'var(--color-gray-900)', fontSize: '18px', marginBottom: 'var(--space-3)', fontWeight: 600, letterSpacing: '-0.01em' }}>
             SermonDive
           </h3>
-          <p style={{ color: '#666', lineHeight: '1.6', fontSize: '14px' }}>
-            Transform sermons into daily spiritual growth with AI-powered Bible study guides.
+          <p style={{ color: 'var(--color-gray-600)', lineHeight: 1.7, fontSize: '15px', maxWidth: '360px' }}>
+            Transform sermons into daily spiritual growth with AI-powered Bible study guides tailored for personal and group journeys.
           </p>
         </div>
-        
+
         <div>
-          <h3 style={{ color: '#667eea', fontSize: '18px', marginBottom: '15px' }}>
-            Quick Links
+          <h3 style={{ color: 'var(--color-gray-900)', fontSize: '16px', marginBottom: 'var(--space-3)', fontWeight: 600 }}>
+            Product
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <Link to="/" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-              Home
-            </Link>
-            <Link to="/generate" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-              Generate Study
-            </Link>
-            <Link to="/topics" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-              Explore Topics
-            </Link>
-            <Link to="/quiz" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-              Bible Quiz
-            </Link>
-            <Link to="/about" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-              About Us
-            </Link>
-            <Link to="/faq" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-              FAQ
-            </Link>
-            <Link to="/privacy" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-            Privacy Policy
-            </Link>
-            <Link to="/feedback" style={{ color: '#666', textDecoration: 'none', fontSize: '14px' }}>
-              Feedback
-            </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <FooterLink to="/">Home</FooterLink>
+            <FooterLink to="/generate">Generate Study</FooterLink>
+            <FooterLink to="/topics">Explore Topics</FooterLink>
+            <FooterLink to="/quiz">Bible Quiz</FooterLink>
+            <FooterLink to="/blog">Blog</FooterLink>
           </div>
         </div>
-        
+
         <div>
-          <h3 style={{ color: '#667eea', fontSize: '18px', marginBottom: '15px' }}>
-            Get in Touch
+          <h3 style={{ color: 'var(--color-gray-900)', fontSize: '16px', marginBottom: 'var(--space-3)', fontWeight: 600 }}>
+            Company
           </h3>
-          <p style={{ color: '#666', fontSize: '14px' }}>
-            <a href="mailto:contact@sermondive.com" style={{ color: '#667eea', textDecoration: 'none' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <FooterLink to="/about">About</FooterLink>
+            <FooterLink to="/faq">FAQ</FooterLink>
+            <FooterLink to="/privacy">Privacy Policy</FooterLink>
+            <FooterLink to="/feedback">Feedback</FooterLink>
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{ color: 'var(--color-gray-900)', fontSize: '16px', marginBottom: 'var(--space-3)', fontWeight: 600 }}>
+            Get in touch
+          </h3>
+          <div style={{ color: 'var(--color-gray-600)', fontSize: '15px' }}>
+            <a
+              href="mailto:contact@sermondive.com"
+              style={{
+                color: 'var(--color-primary)',
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            >
               contact@sermondive.com
             </a>
-          </p>
+            <p style={{ marginTop: 'var(--space-3)', lineHeight: 1.6 }}>
+              We’d love to hear how you’re using SermonDive with your church, small group, or personal study.
+            </p>
+          </div>
         </div>
       </div>
-      
-      <div style={{
-        textAlign: 'center',
-        marginTop: '40px',
-        paddingTop: '20px',
-        borderTop: '1px solid rgba(102, 126, 234, 0.1)',
-        color: '#999',
-        fontSize: '14px',
-      }}>
-        © {new Date().getFullYear()} SermonDive. All rights reserved.
+
+      <div
+        style={{
+          position: 'relative',
+          maxWidth: '1400px',
+          margin: 'var(--space-8) auto 0',
+          paddingTop: 'var(--space-6)',
+          borderTop: '1px solid rgba(0, 0, 0, 0.05)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 'var(--space-4)',
+          color: 'var(--color-gray-500)',
+          fontSize: '14px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>© {new Date().getFullYear()} SermonDive. All rights reserved.</div>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+          <span>Built for discipleship</span>
+          <span>•</span>
+          <span>DocShield-inspired UI</span>
+        </div>
       </div>
     </footer>
+  );
+}
+
+function FooterLink({ to, children }) {
+  return (
+    <Link
+      to={to}
+      style={{
+        color: 'var(--color-gray-600)',
+        textDecoration: 'none',
+        fontSize: '15px',
+        transition: 'opacity var(--transition-fast)',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
+      onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+    >
+      {children}
+    </Link>
   );
 }

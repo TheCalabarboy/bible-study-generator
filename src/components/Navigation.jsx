@@ -22,12 +22,12 @@ export default function Navigation() {
   return (
     <nav
       style={{
-        background: 'rgba(255, 255, 255, 0.8)',
+        background: 'rgba(255, 255, 255, 0.86)',
         backdropFilter: 'blur(var(--blur-lg))',
         WebkitBackdropFilter: 'blur(var(--blur-lg))',
-        boxShadow: '0 1px 0 rgba(0, 0, 0, 0.05)',
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-        padding: 'var(--space-3) 0',
+        boxShadow: 'var(--shadow-xs)',
+        padding: 'var(--space-2) 0',
         position: 'sticky',
         top: 0,
         zIndex: 1000,
@@ -36,13 +36,13 @@ export default function Navigation() {
     >
       <div
         style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto',
-          padding: '0 var(--space-6)',
+          padding: 'var(--space-3) var(--space-8)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: 'var(--space-6)',
+          gap: 'var(--space-8)',
         }}
       >
         {/* Left: Logo / Home */}
@@ -62,15 +62,15 @@ export default function Navigation() {
             src={Logo}
             alt="SermonDive"
             style={{
-              height: '36px',
+              height: '38px',
               width: 'auto',
             }}
           />
           <span
             style={{
-              fontWeight: '700',
-              fontSize: '19px',
-              color: 'var(--color-gray-900)',
+              fontWeight: 600,
+              fontSize: '18px',
+              color: 'var(--color-gray-800)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -78,13 +78,13 @@ export default function Navigation() {
           </span>
         </Link>
 
-        {/* Right: Nav links */}
+        {/* Right: Nav links + CTA */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 'var(--space-2)',
-            justifyContent: 'flex-end',
+            gap: 'var(--space-4)',
+            justifyContent: 'space-between',
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
             maxWidth: '100%',
@@ -92,42 +92,73 @@ export default function Navigation() {
             flex: '1 1 auto',
           }}
         >
-          {links.map((l) => (
-            <Link
-              key={l.path}
-              to={l.path}
-              style={{
-                textDecoration: 'none',
-                fontWeight: '500',
-                fontSize: '15px',
-                padding: 'var(--space-2) var(--space-4)',
-                borderRadius: 'var(--radius-md)',
-                color: isActive(l.path)
-                  ? 'var(--color-primary)'
-                  : 'var(--color-gray-700)',
-                background: isActive(l.path)
-                  ? 'rgba(0, 122, 255, 0.08)'
-                  : 'transparent',
-                transition: 'all var(--transition-fast)',
-                whiteSpace: 'nowrap',
-                position: 'relative',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive(l.path)) {
-                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.04)';
-                  e.currentTarget.style.color = 'var(--color-gray-900)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive(l.path)) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--color-gray-700)';
-                }
-              }}
-            >
-              {l.label}
-            </Link>
-          ))}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+              flexWrap: 'wrap',
+              minWidth: 0,
+            }}
+          >
+            {links.map((l) => (
+              <Link
+                key={l.path}
+                to={l.path}
+                style={{
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                  fontSize: '15px',
+                  padding: 'var(--space-2) var(--space-4)',
+                  borderRadius: 'var(--radius-xl)',
+                  color: isActive(l.path)
+                    ? 'var(--color-primary)'
+                    : 'var(--color-gray-700)',
+                  background: isActive(l.path)
+                    ? 'rgba(0, 122, 255, 0.12)'
+                    : 'transparent',
+                  transition: 'all var(--transition-fast)',
+                  whiteSpace: 'nowrap',
+                  position: 'relative',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive(l.path)) {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.04)';
+                    e.currentTarget.style.color = 'var(--color-gray-900)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive(l.path)) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--color-gray-700)';
+                  }
+                }}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
+
+          <Link
+            to="/generate"
+            style={{
+              textDecoration: 'none',
+              padding: 'var(--space-3) var(--space-5)',
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--gradient-primary)',
+              color: 'var(--color-white)',
+              fontWeight: 600,
+              fontSize: '15px',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'opacity var(--transition-fast)',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+          >
+            Get Started
+          </Link>
         </div>
       </div>
     </nav>
