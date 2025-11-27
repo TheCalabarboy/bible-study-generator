@@ -530,18 +530,6 @@ function App() {
               textAlign: 'center',
               marginBottom: 'var(--space-71)',
             }}>
-              <div style={{ marginBottom: 'var(--space-4)' }}>
-                <img
-                  src={Logo}
-                  alt="SermonDive Logo"
-                  style={{
-                    width: '180px',
-                    height: 'auto',
-                    margin: '0 auto',
-                    display: 'block'
-                  }}
-                />
-              </div>
               <h1 style={{
                 fontSize: 'clamp(36px, 5vw, 56px)',
                 fontWeight: '400',

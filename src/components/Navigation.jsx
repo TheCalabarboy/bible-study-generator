@@ -21,6 +21,7 @@ export default function Navigation() {
 
   return (
     <nav
+      id="nav-shell"
       style={{
         background: 'transparent',
         padding: 'var(--space-2) 0',
@@ -31,6 +32,7 @@ export default function Navigation() {
       }}
     >
       <div
+        id="nav-inner"
         style={{
           maxWidth: '1400px',
           margin: 'var(--space-4) auto 0',
@@ -82,6 +84,7 @@ export default function Navigation() {
 
         {/* Right: Nav links + CTA */}
         <div
+          id="nav-links"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -163,6 +166,35 @@ export default function Navigation() {
           </Link>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          #nav-shell {
+            padding: 12px 12px 0;
+          }
+          #nav-inner {
+            margin: 0 auto;
+            padding: 10px 12px;
+            gap: 10px;
+            borderRadius: 18px;
+          }
+          #nav-links {
+            gap: 8px;
+          }
+          #nav-links > div:nth-child(1) {
+            gap: 6px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+          }
+          #nav-links a {
+            padding: 8px 12px;
+            font-size: 14px;
+          }
+          #nav-links a:last-of-type {
+            padding: 10px 16px;
+            font-size: 14px;
+          }
+        }
+      `}</style>
     </nav>
   );
 }

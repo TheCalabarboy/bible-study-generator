@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import VideoModal from '../components/VideoModal';
-import HeroReading from '../assets/hero-reading.jpg';
+import HeroReading from '../assets/hero-reading.png';
+import Logo from '../assets/Logo.png';
 
 export default function HomePage() {
   const introVideoId = import.meta.env.VITE_INTRO_VIDEO_ID || 'IwooZSKSDpg';
@@ -42,26 +43,30 @@ export default function HomePage() {
           transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
+            <img src={Logo} alt="SermonDive" style={{ width: 140, height: 'auto' }} />
+          </div>
+
           <h1 style={{
-            fontSize: 'clamp(44px, 7vw, 76px)',
+            fontSize: 'clamp(36px, 6vw, 80px)',
             fontWeight: 400,
             marginBottom: 'var(--space-4)',
             color: 'white',
             letterSpacing: '-0.02em',
-            lineHeight: '1.1',
+            lineHeight: '1.05',
           }}>
-            The fastest way to turn sermons<br />into daily Bible studies
+            Transform Sermons into<br />Daily Spiritual Growth
           </h1>
 
           <p style={{
-            fontSize: 'clamp(18px, 2.5vw, 22px)',
+            fontSize: 'clamp(16px, 2.3vw, 20px)',
             lineHeight: 1.6,
             color: 'rgba(255,255,255,0.9)',
             maxWidth: '760px',
             margin: '0 auto var(--space-6)',
             fontWeight: 400,
           }}>
-            70%+ of your plan pre-filled from any sermon link. Generate, personalize, and share a five-day Scripture study in minutes.
+            Turn any Christian sermon or teaching into a comprehensive 5-day Bible study plan. Deepen your faith, explore Scripture, and apply biblical truth to your life.
           </p>
 
           <div style={{
@@ -100,7 +105,7 @@ export default function HomePage() {
             </Link>
 
             <Link
-              to="/topics"
+              to="/faq"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -128,35 +133,13 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            position: 'relative',
-            marginTop: 'var(--space-6)',
-          }}>
-            <div style={{
-              width: 'min(520px, 90vw)',
-              borderRadius: '28px',
-              overflow: 'hidden',
-              boxShadow: '0 25px 70px rgba(0,0,0,0.25)',
-              border: '6px solid rgba(255,255,255,0.65)',
-              background: 'rgba(255,255,255,0.9)',
-            }}>
-              <img
-                src={HeroReading}
-                alt="Young woman reading the Bible"
-                style={{ width: '100%', display: 'block' }}
-              />
-            </div>
-          </div>
         </div>
 
         {/* Feature Cards - DocShield Spacing */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: 'var(--space-71)',
+          gap: 'var(--space-6)',
           opacity: isVisible ? 1 : 0,
           transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
           transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s',
@@ -165,17 +148,19 @@ export default function HomePage() {
           <Link
             to="/generate"
             style={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(var(--blur-md))',
-              WebkitBackdropFilter: 'blur(var(--blur-md))',
-              padding: 'var(--space-12)',
-              borderRadius: '20px',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
+              background: 'linear-gradient(135deg, #3b5fae 0%, #6f8fda 100%)',
+              padding: 'var(--space-8)',
+              borderRadius: '12px',
+              border: 'none',
               textDecoration: 'none',
               transition: 'opacity var(--transition-fast)',
-              boxShadow: 'var(--shadow-md)',
+              boxShadow: '0 12px 30px rgba(59, 95, 174, 0.25)',
               position: 'relative',
               overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = '0.85';
@@ -185,31 +170,32 @@ export default function HomePage() {
             }}
           >
             <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: 'var(--radius-lg)',
-              background: 'var(--gradient-primary)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #2f4f9d 0%, #5c7fda 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: 'var(--space-5)',
-              fontSize: '28px',
+              marginBottom: 'var(--space-3)',
+              fontSize: '22px',
+              color: 'white',
             }}>
-              🎥
+              🎬
             </div>
             <h3 style={{
-              fontSize: '22px',
+              fontSize: '18px',
               fontWeight: '600',
-              marginBottom: 'var(--space-3)',
-              color: 'var(--color-gray-900)',
+              marginBottom: 'var(--space-2)',
+              color: 'white',
               letterSpacing: '-0.01em',
             }}>
               Sermon Analysis
             </h3>
             <p style={{
-              fontSize: '16px',
+              fontSize: '14px',
               lineHeight: '1.6',
-              color: 'var(--color-gray-600)',
+              color: 'rgba(255,255,255,0.9)',
               fontWeight: '400',
             }}>
               Paste any YouTube sermon link and our AI analyzes the content to create personalized studies.
@@ -220,17 +206,19 @@ export default function HomePage() {
           <Link
             to="/topics"
             style={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(var(--blur-md))',
-              WebkitBackdropFilter: 'blur(var(--blur-md))',
-              padding: 'var(--space-12)',
-              borderRadius: '20px',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
+              background: 'linear-gradient(135deg, #3b5fae 0%, #6f8fda 100%)',
+              padding: 'var(--space-8)',
+              borderRadius: '12px',
+              border: 'none',
               textDecoration: 'none',
               transition: 'opacity var(--transition-fast)',
-              boxShadow: 'var(--shadow-md)',
+              boxShadow: '0 12px 30px rgba(59, 95, 174, 0.25)',
               position: 'relative',
               overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = '0.85';
@@ -240,36 +228,58 @@ export default function HomePage() {
             }}
           >
             <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: 'var(--radius-lg)',
-              background: 'var(--gradient-accent)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #2f4f9d 0%, #5c7fda 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: 'var(--space-5)',
-              fontSize: '28px',
+              marginBottom: 'var(--space-3)',
+              fontSize: '22px',
+              color: 'white',
             }}>
-              📚
+              📖
             </div>
             <h3 style={{
-              fontSize: '22px',
+              fontSize: '18px',
               fontWeight: '600',
-              marginBottom: 'var(--space-3)',
-              color: 'var(--color-gray-900)',
+              marginBottom: 'var(--space-2)',
+              color: 'white',
               letterSpacing: '-0.01em',
             }}>
               Topical Study
             </h3>
             <p style={{
-              fontSize: '16px',
+              fontSize: '14px',
               lineHeight: '1.6',
-              color: 'var(--color-gray-600)',
+              color: 'rgba(255,255,255,0.9)',
               fontWeight: '400',
             }}>
               Enter any biblical topic or doctrine and get a comprehensive Scripture-based study plan.
             </p>
           </Link>
+        </div>
+
+        <div style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          position: 'relative',
+          marginTop: 'var(--space-8)',
+          marginBottom: '-120px',
+        }}>
+          <img
+            src={HeroReading}
+            alt="Young woman reading the Bible"
+            style={{
+              width: 'min(520px, 90vw)',
+              display: 'block',
+              position: 'relative',
+              top: '0',
+              marginBottom: '-40px',
+            }}
+          />
         </div>
       </div>
 
