@@ -7,6 +7,7 @@ import Logo from '../assets/Logo.png';
 export default function HomePage() {
   const introVideoId = import.meta.env.VITE_INTRO_VIDEO_ID || 'IwooZSKSDpg';
   const [isVisible, setIsVisible] = useState(false);
+  const [videoKey, setVideoKey] = useState(0);
 
   useEffect(() => {
     setIsVisible(true);
@@ -76,8 +77,16 @@ export default function HomePage() {
             flexWrap: 'wrap',
             marginBottom: 'var(--space-10)',
           }}>
-            <Link
-              to="/generate"
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem('introVideoDismissed');
+                } catch (error) {
+                  console.warn('Could not reset intro video dismissal', error);
+                }
+                setVideoKey((prev) => prev + 1);
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -95,14 +104,14 @@ export default function HomePage() {
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.target.style.opacity = '0.8';
+                e.currentTarget.style.opacity = '0.8';
               }}
               onMouseLeave={(e) => {
-                e.target.style.opacity = '1';
+                e.currentTarget.style.opacity = '1';
               }}
             >
-              Get started
-            </Link>
+              Watch Video
+            </button>
 
             <Link
               to="/faq"
@@ -285,6 +294,7 @@ export default function HomePage() {
 
       {introVideoId && (
         <VideoModal
+          key={videoKey}
           videoId={introVideoId}
           storageKey="introVideoDismissed"
           headline="Welcome to SermonDive"
