@@ -173,7 +173,7 @@ export default function Topics() {
     if (format === 'word') {
       await exportStudyToWord(study.content || '', dayNumber, safeTitle);
     } else if (format === 'txt') {
-      const blob = new Blob([safeContent], { type: 'text/plain' });
+      const blob = new Blob([study.content || ''], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

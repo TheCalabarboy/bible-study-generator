@@ -1,15 +1,6 @@
 // src/services/geminiService.js
-// Requires: npm i @google/generative-ai youtube-transcript
-// NOTE: In many browsers, YouTube captions endpoints block CORS.
-// This file still tries in-browser; if transcript length keeps logging 0,
-// move transcript fetching to a tiny server proxy (as discussed).
-
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { YoutubeTranscript } from 'youtube-transcript';
-
-// Default to the current stable Pro model; allow override via env for flexibility.
-const MODEL_NAME = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-pro';
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+// SECURE VERSION: Calls backend API instead of Gemini directly
+// API key is now kept server-side only
 
 /* ----------------------------- Utilities ----------------------------- */
 
@@ -22,7 +13,7 @@ function chunkText(text, maxChars = 12000, overlap = 300) {
   while (i < text.length) {
     const end = Math.min(text.length, i + maxChars);
     chunks.push(text.slice(i, end));
-    i = end - overlap; // small overlap to keep context continuity
+    i = end - overlap;
     if (i < 0) i = 0;
     if (i >= text.length) break;
   }
@@ -52,8 +43,6 @@ function average(nums) {
 
 /**
  * Attempts to repair malformed JSON by fixing common issues
- * @param {string} jsonString - Potentially malformed JSON string
- * @returns {string} - Repaired JSON string
  */
 function repairJSON(jsonString) {
   let repaired = jsonString;
@@ -64,31 +53,11 @@ function repairJSON(jsonString) {
   // Remove any BOM or invisible characters at start
   repaired = repaired.replace(/^\uFEFF/, '').trim();
 
-  // --- Advanced Repair: Fix internal unescaped quotes and newlines ---
-  // This is the most common cause of "Expected ',' or ']'" errors.
-  let repairedChars = [];
-  let depth = 0;
+  // Track string state and bracket depth
   let inString = false;
   let escaped = false;
+  let depth = 0;
 
-  for (let i = 0; i < repaired.length; i++) {
-    const char = repaired[i];
-    repairedChars.push(char);
-
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
-    if (char === '\\') {
-      escaped = true;
-      continue;
-    }
-    if (char === '"') {
-      inString = !inString;
-    }
-  }
-
-  // Reset for a second pass to fix structures
   for (let i = 0; i < repaired.length; i++) {
     const char = repaired[i];
 
@@ -116,19 +85,17 @@ function repairJSON(jsonString) {
     }
   }
 
-  // If we're still in a string at the end, it's a truncation. Close it.
+  // If we're still in a string at the end, close it
   if (inString) {
     console.log('⚠ Detected unterminated string, closing it...');
-    repaired = repaired + '"'; // Close the string
+    repaired = repaired + '"';
   }
 
   // If depth is still positive, close remaining structures
   while (depth > 0) {
     console.log(`⚠ Detected ${depth} unclosed brackets/braces, closing them...`);
-    while (depth > 0) {
-      repaired += '}';
-      depth--;
-    }
+    repaired += '}';
+    depth--;
   }
 
   return repaired;
@@ -136,8 +103,6 @@ function repairJSON(jsonString) {
 
 /**
  * Validates that a study is complete and not truncated
- * @param {object} study - Single study object
- * @returns {boolean} - True if study appears complete
  */
 function isStudyComplete(study) {
   if (!study || !study.content) return false;
@@ -145,10 +110,8 @@ function isStudyComplete(study) {
   const content = study.content;
   const contentLength = content.length;
 
-  // Check minimum length (truncated studies are usually very short)
   if (contentLength < 500) return false;
 
-  // Check for expected sections in the content
   const requiredSections = [
     /##\s*Introduction/i,
     /##\s*Scripture Reading/i,
@@ -159,11 +122,8 @@ function isStudyComplete(study) {
 
   const sectionsFound = requiredSections.filter(regex => regex.test(content)).length;
 
-  // At least 4 out of 5 required sections should be present
   if (sectionsFound < 4) return false;
 
-  // Check that content doesn't end abruptly (has proper ending)
-  // Truncated content often ends mid-sentence or without proper closure
   const lastLines = content.split('\n').slice(-5).join('\n').trim();
   if (lastLines.length < 50) return false;
 
@@ -172,8 +132,6 @@ function isStudyComplete(study) {
 
 /**
  * Validates that all studies in an array are complete
- * @param {array} studies - Array of study objects
- * @returns {object} - {isValid: boolean, incompleteIndices: number[]}
  */
 function validateStudiesCompleteness(studies) {
   if (!Array.isArray(studies) || studies.length === 0) {
@@ -202,20 +160,79 @@ function validateStudiesCompleteness(studies) {
   return { isValid: true, incompleteIndices: [], message: 'All studies are complete' };
 }
 
+/* ---------------------- API Helper ---------------------- */
+
+// Determine API base URL (works in dev and production)
+const API_BASE = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || '');
+
+/**
+ * Call the secure backend Gemini API
+ */
+async function callGeminiAPI(payload, maxAttempts = 3) {
+  let attempt = 0;
+  let delay = 800;
+
+  while (attempt < maxAttempts) {
+    try {
+      const response = await fetch(`${API_BASE}/api/gemini`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate', payload })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const error = new Error(data.error || 'API request failed');
+        error.status = response.status;
+        throw error;
+      }
+
+      return data.text;
+
+    } catch (err) {
+      const status = err.status;
+      const retriable = status === 429 || status === 503;
+      attempt += 1;
+
+      if (!retriable || attempt >= maxAttempts) {
+        throw err;
+      }
+
+      console.warn(
+        `API request failed with status ${status}. Retrying in ${delay}ms (attempt ${attempt}/${maxAttempts}).`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      delay *= 2;
+    }
+  }
+}
+
 /* ---------------------- Transcript Retrieval ------------------------ */
 
 export async function fetchYouTubeTranscript(videoId) {
   try {
-    const items = await YoutubeTranscript.fetchTranscript(videoId);
-    const full = items.map(i => i.text).join(' ').replace(/\s+/g, ' ').trim();
-    return { ok: true, text: full, items };
+    const response = await fetch(`${API_BASE}/api/transcript`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ videoId })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      return { ok: true, text: data.text, items: data.items };
+    } else {
+      console.warn('Transcript fetch failed:', data.error);
+      return { ok: false, text: '' };
+    }
   } catch (err) {
-    console.warn('Transcript fetch failed or unavailable. Falling back:', err?.message || err);
+    console.warn('Transcript fetch error:', err?.message || err);
     return { ok: false, text: '' };
   }
 }
 
-/* --------------------- Schema & Model Helpers ----------------------- */
+/* --------------------- Schema Definitions ----------------------- */
 
 const analysisSchema = {
   type: 'object',
@@ -247,61 +264,9 @@ const studyArraySchema = {
   maxItems: 5
 };
 
-function getModel(config = {}) {
-  return genAI.getGenerativeModel({
-    model: MODEL_NAME,
-    generationConfig: {
-      maxOutputTokens: 8192, // Ensure enough tokens for complete study
-      ...config
-    }
-  });
-}
-
-function extractStatus(err) {
-  if (!err) return undefined;
-  if (typeof err.status === 'number') return err.status;
-  if (err.response?.status) return err.response.status;
-  const message = err.message || '';
-  const match = message.match(/\[(\d{3})\]/);
-  if (match) return Number(match[1]);
-  return undefined;
-}
-
-async function generateWithRetry(model, request, maxAttempts = 3, initialDelay = 800) {
-  let attempt = 0;
-  let delay = initialDelay;
-
-  while (attempt < maxAttempts) {
-    try {
-      return await model.generateContent(request);
-    } catch (err) {
-      const status = extractStatus(err);
-      const retriable = status === 429 || status === 503;
-      attempt += 1;
-
-      if (!retriable || attempt >= maxAttempts) {
-        throw err;
-      }
-
-      console.warn(
-        `Gemini request failed with status ${status}. Retrying in ${delay}ms (attempt ${attempt}/${maxAttempts}).`
-      );
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      delay *= 2;
-    }
-  }
-}
-
 /* ---------------------- Public API: Analyze ------------------------- */
-/**
- * Analyze whether a video is Christian teaching, using transcript when available.
- * @param {string} videoTitle
- * @param {string} videoDescription
- * @param {string} [videoId] - Optional YouTube videoId to pull transcript
- */
-export async function analyzeVideoForBiblicalContent(videoTitle, videoDescription, videoId) {
-  const model = getModel();
 
+export async function analyzeVideoForBiblicalContent(videoTitle, videoDescription, videoId) {
   // Try to ground the model with transcript
   let transcript = '';
   if (videoId) {
@@ -316,13 +281,10 @@ export async function analyzeVideoForBiblicalContent(videoTitle, videoDescriptio
 
     const partials = [];
     for (const chunk of chunks) {
-      const res = await generateWithRetry(model, {
-        systemInstruction:
-          'You are a conservative, charismatic, text-grounded biblical content analyzer. Only use the provided transcript.',
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseSchema: analysisSchema
-        },
+      const responseText = await callGeminiAPI({
+        systemInstruction: 'You are a conservative, charismatic, text-grounded biblical content analyzer. Only use the provided transcript.',
+        responseMimeType: 'application/json',
+        responseSchema: analysisSchema,
         contents: [
           {
             role: 'user',
@@ -343,7 +305,7 @@ Task: Determine if this chunk reflects Christian biblical teaching/sermon conten
         ]
       });
 
-      const parsed = JSON.parse(res.response.text());
+      const parsed = JSON.parse(responseText);
       partials.push(parsed);
     }
 
@@ -358,14 +320,11 @@ Task: Determine if this chunk reflects Christian biblical teaching/sermon conten
     return { isChristianTeaching, confidence, reason, mainThemes, scriptureReferences };
   }
 
-  // Fallback: short transcript (or none) — still pass whatever we have
-  const res = await generateWithRetry(model, {
-    systemInstruction:
-      'You are a conservative, charismatic, text-grounded biblical content analyzer. Prefer evidence from transcript; otherwise be cautious.',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: analysisSchema
-    },
+  // Fallback: short transcript (or none)
+  const responseText = await callGeminiAPI({
+    systemInstruction: 'You are a conservative, charismatic, text-grounded biblical content analyzer. Prefer evidence from transcript; otherwise be cautious.',
+    responseMimeType: 'application/json',
+    responseSchema: analysisSchema,
     contents: [
       {
         role: 'user',
@@ -385,21 +344,12 @@ Task: Determine if this is clearly Christian biblical teaching or preaching, ext
     ]
   });
 
-  const parsed = JSON.parse(res.response.text());
+  const parsed = JSON.parse(responseText);
   return parsed;
 }
 
 /* ------------------- Public API: Study Generation ------------------- */
-/**
- * Generate a 5-day study grounded in the sermon transcript and detected themes.
- * @param {string} videoTitle
- * @param {string} videoDescription
- * @param {string[]} themes
- * @param {string[]} scriptures
- * @param {object} options
- * @param {string} [videoId] - Optional YouTube videoId to include transcript evidence
- * @param {string} [customContext] - Raw user-provided text to ground the study
- */
+
 export async function generateBibleStudy(
   videoTitle,
   videoDescription,
@@ -409,9 +359,7 @@ export async function generateBibleStudy(
   videoId,
   customContext = ''
 ) {
-  const model = getModel();
-
-  // Try to get transcript (best-effort). Even a few thousand chars improves specificity.
+  // Try to get transcript
   let transcript = '';
   if (customContext) {
     transcript = customContext;
@@ -422,8 +370,7 @@ export async function generateBibleStudy(
   }
   console.log('Transcript length (study):', transcript ? transcript.length : 0);
 
-  // Trim transcript to a manageable context; the structure/pattern does not need the entire thing.
-  // Prefer a few instructive slices: head, middle, tail.
+  // Slice transcript for context
   function sliceAround(text, parts = 3, each = 3500) {
     if (!text) return '';
     const len = text.length;
@@ -465,7 +412,6 @@ export async function generateBibleStudy(
   const includeMemory = !!options.includeMemoryVerses;
   const includeAction = !!options.includeActionSteps;
 
-  // —— Streamlined expert prompt (grounded, exegetical, pastoral) ——
   const studyPrompt = `
 Create a complete 5-day Bible study that is:
 1. Grounded in the transcript excerpts and themes provided
@@ -524,8 +470,8 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
 
   // Retry logic with validation
   let attempts = 0;
-  const maxValidationAttempts = 3; // Increased to 3 attempts
-  let useTextMode = false; // Flag to switch to text mode on repeated failures
+  const maxValidationAttempts = 3;
+  let useTextMode = false;
 
   while (attempts < maxValidationAttempts) {
     attempts++;
@@ -533,42 +479,35 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
     console.log(`Study generation attempt ${attempts}/${maxValidationAttempts}${useTextMode ? ' (text mode)' : ''}`);
 
     try {
-      // Build generation config - use text mode as fallback
-      const generationConfig = useTextMode
+      const payload = useTextMode
         ? {
+            systemInstruction: 'Produce precise, evidence-grounded studies. Return ONLY a valid JSON array with exactly 5 study objects. CRITICAL: Complete ALL sections for ALL 5 days.',
             maxOutputTokens: 8192,
-            temperature: 0.7
+            temperature: 0.7,
+            contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
           }
         : {
+            systemInstruction: 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema. IMPORTANT: Complete ALL sections for ALL 5 days.',
             responseMimeType: 'application/json',
             responseSchema: studyArraySchema,
             maxOutputTokens: 8192,
-            temperature: 0.7
+            temperature: 0.7,
+            contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
           };
 
-      const res = await generateWithRetry(model, {
-        systemInstruction: useTextMode
-          ? 'Produce precise, evidence-grounded studies. Return ONLY a valid JSON array with exactly 5 study objects. CRITICAL: Complete ALL sections for ALL 5 days. Each "content" field must include ALL required sections.'
-          : 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema. IMPORTANT: Complete ALL sections for ALL 5 days. Do not truncate content.',
-        generationConfig,
-        contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
-      });
+      const responseText = await callGeminiAPI(payload);
 
-      let responseText = res.response.text();
-
-      // Log first 200 chars for debugging
       console.log('Response preview:', responseText.substring(0, 200));
 
       let parsed;
       let parseSucceeded = false;
+
       try {
-        // First try: direct parse (should work with responseMimeType: 'application/json')
         parsed = JSON.parse(responseText);
         parseSucceeded = true;
       } catch (parseError) {
         console.warn('Initial JSON parse failed, attempting repair:', parseError.message);
 
-        // Try advanced JSON repair
         try {
           const repairedJSON = repairJSON(responseText);
           parsed = JSON.parse(repairedJSON);
@@ -576,16 +515,6 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
           parseSucceeded = true;
         } catch (repairError) {
           console.error('JSON parse failed after repair. Response length:', responseText.length);
-          console.error('Parse error:', repairError.message);
-
-          // Log a snippet around the error position if available
-          const match = repairError.message.match(/position (\d+)/);
-          if (match) {
-            const pos = parseInt(match[1]);
-            const start = Math.max(0, pos - 100);
-            const end = Math.min(responseText.length, pos + 100);
-            console.error('Context around error:', responseText.substring(start, end));
-          }
 
           // Fallback: attempt to extract JSON array manually
           const arrayStart = responseText.indexOf('[');
@@ -601,18 +530,15 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
             }
           }
 
-          // If this is not the last attempt, retry
           if (!parseSucceeded && attempts < maxValidationAttempts) {
-            // Switch to text mode for next attempt if we're on attempt 2+
             if (attempts >= 2 && !useTextMode) {
               console.log('⚠ Switching to text mode for next attempt...');
               useTextMode = true;
             }
             console.log('Retrying due to JSON parse error...');
             await new Promise(resolve => setTimeout(resolve, 1500));
-            continue; // Skip to next iteration
+            continue;
           } else if (!parseSucceeded) {
-            // Last attempt - throw error
             throw new Error(`Failed to parse JSON response after ${maxValidationAttempts} attempts: ${repairError.message}`);
           }
         }
@@ -622,7 +548,6 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
         throw new Error('Failed to parse JSON response.');
       }
 
-      // Ensure parsed is an array
       if (!Array.isArray(parsed)) {
         console.error('Response is not an array:', typeof parsed);
         if (attempts < maxValidationAttempts) {
@@ -639,7 +564,6 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
 
       if (validation.isValid) {
         console.log('✓ All studies validated as complete');
-        // Light normalization in case the model misses a field
         return parsed.map((study, index) => ({
           day: typeof study.day === 'number' ? study.day : (index + 1),
           title: study.title || `Day ${index + 1}`,
@@ -650,12 +574,10 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
 
       console.warn(`✗ Validation failed: ${validation.message}`);
 
-      // If this is not the last attempt, retry
       if (attempts < maxValidationAttempts) {
         console.log('Retrying study generation due to incomplete content...');
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Brief delay before retry
+        await new Promise(resolve => setTimeout(resolve, 1500));
       } else {
-        // Last attempt failed - log warning but return what we have
         console.error('Final attempt: Studies may be incomplete but returning available content');
         return parsed.map((study, index) => ({
           day: typeof study.day === 'number' ? study.day : (index + 1),
@@ -667,18 +589,15 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
     } catch (error) {
       console.error(`Attempt ${attempts} failed:`, error.message);
 
-      // If this is not the last attempt, retry
       if (attempts < maxValidationAttempts) {
         console.log('Retrying after error...');
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Longer delay after error
+        await new Promise(resolve => setTimeout(resolve, 2000));
         continue;
       } else {
-        // Last attempt failed - throw error
         throw error;
       }
     }
   }
 
-  // This should never be reached, but just in case
   throw new Error('Study generation failed after all retry attempts');
 }
