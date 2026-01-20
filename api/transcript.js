@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     }
 
     const items = await YoutubeTranscript.fetchTranscript(videoId);
-    const fullText = items.map(i => i.text).join(' ').replace(/\s+/g, ' ').trim();
+    const fullText = items.map(i => i.text).join(' ').replace(/s+/g, ' ').trim();
 
     // Set CORS headers
     Object.entries(corsHeaders).forEach(([key, value]) => {

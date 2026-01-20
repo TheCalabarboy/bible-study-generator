@@ -53,7 +53,6 @@ export default async function handler(req, res) {
 
     const responseText = result.response.text();
 
-    // Set CORS headers
     Object.entries(corsHeaders).forEach(([key, value]) => {
       res.setHeader(key, value);
     });
@@ -65,14 +64,10 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Gemini API error:', error);
-
     const status = extractStatus(error);
-
-    // Set CORS headers even on error
     Object.entries(corsHeaders).forEach(([key, value]) => {
       res.setHeader(key, value);
     });
-
     return res.status(status || 500).json({
       error: error.message || 'Internal server error',
       status: status
@@ -80,22 +75,19 @@ export default async function handler(req, res) {
   }
 }
 
-// Helper: Extract HTTP status from error
 function extractStatus(err) {
   if (!err) return undefined;
   if (typeof err.status === 'number') return err.status;
   if (err.response?.status) return err.response.status;
   const message = err.message || '';
-  const match = message.match(/\[(\d{3})\]/);
+  const match = message.match(/[(d{3})]/);
   if (match) return Number(match[1]);
   return undefined;
 }
 
-// Helper: Retry with exponential backoff
 async function generateWithRetry(model, request, maxAttempts = 3, initialDelay = 800) {
   let attempt = 0;
   let delay = initialDelay;
-
   while (attempt < maxAttempts) {
     try {
       return await model.generateContent(request);
@@ -103,14 +95,7 @@ async function generateWithRetry(model, request, maxAttempts = 3, initialDelay =
       const status = extractStatus(err);
       const retriable = status === 429 || status === 503;
       attempt += 1;
-
-      if (!retriable || attempt >= maxAttempts) {
-        throw err;
-      }
-
-      console.warn(
-        `Gemini request failed with status ${status}. Retrying in ${delay}ms (attempt ${attempt}/${maxAttempts}).`
-      );
+      if (!retriable || attempt >= maxAttempts) throw err;
       await new Promise((resolve) => setTimeout(resolve, delay));
       delay *= 2;
     }
