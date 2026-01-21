@@ -174,7 +174,10 @@ async function callGeminiAPI(payload, maxAttempts = 3) {
 
   while (attempt < maxAttempts) {
     try {
-      const response = await fetch(`${API_BASE}/api/gemini`, {
+      const url = `${API_BASE}/api/gemini`;
+      console.log(`Calling Gemini API at: ${url} (Attempt ${attempt + 1}/${maxAttempts})`);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'generate', payload })
@@ -291,7 +294,7 @@ export async function analyzeVideoForBiblicalContent(videoTitle, videoDescriptio
             parts: [
               {
                 text:
-`VIDEO CONTEXT:
+                  `VIDEO CONTEXT:
 Title: ${videoTitle}
 Description: ${videoDescription}
 
@@ -331,7 +334,7 @@ Task: Determine if this chunk reflects Christian biblical teaching/sermon conten
         parts: [
           {
             text:
-`VIDEO CONTEXT
+              `VIDEO CONTEXT
 Title: ${videoTitle}
 Description: ${videoDescription}
 
@@ -481,19 +484,19 @@ RETURN: JSON array with 5 complete objects: {"day":N,"title":"...","passage":"..
     try {
       const payload = useTextMode
         ? {
-            systemInstruction: 'Produce precise, evidence-grounded studies. Return ONLY a valid JSON array with exactly 5 study objects. CRITICAL: Complete ALL sections for ALL 5 days.',
-            maxOutputTokens: 8192,
-            temperature: 0.7,
-            contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
-          }
+          systemInstruction: 'Produce precise, evidence-grounded studies. Return ONLY a valid JSON array with exactly 5 study objects. CRITICAL: Complete ALL sections for ALL 5 days.',
+          maxOutputTokens: 8192,
+          temperature: 0.7,
+          contents: [{ role: 'user', parts: [{ text: studyPrompt }] }]
+        }
         : {
-            systemInstruction: 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema. IMPORTANT: Complete ALL sections for ALL 5 days.',
-            responseMimeType: 'application/json',
-            responseSchema: studyArraySchema,
-            maxOutputTokens: 8192,
-            temperature: 0.7,
-            contents: [{ role: 'user', parts: [{ text: studyPrompt }]}]
-          };
+          systemInstruction: 'Produce precise, evidence-grounded studies. Output must be valid JSON according to the given schema. IMPORTANT: Complete ALL sections for ALL 5 days.',
+          responseMimeType: 'application/json',
+          responseSchema: studyArraySchema,
+          maxOutputTokens: 8192,
+          temperature: 0.7,
+          contents: [{ role: 'user', parts: [{ text: studyPrompt }] }]
+        };
 
       const responseText = await callGeminiAPI(payload);
 

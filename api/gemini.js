@@ -31,6 +31,11 @@ export default async function handler(req, res) {
   try {
     const { action, payload } = req.body;
 
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('Configuration Error: GEMINI_API_KEY is not set in environment variables.');
+      return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+    }
+
     if (!action || !payload) {
       return res.status(400).json({ error: 'Missing action or payload' });
     }
@@ -63,14 +68,25 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Gemini API error:', error);
-    const status = extractStatus(error);
+    console.error('Gemini API Fatal Error:', {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause,
+      details: error
+    });
+
+    // Attempt to extract useful status
+    const status = extractStatus(error) || 500;
+
+    // Ensure CORS headers are present even on error
     Object.entries(corsHeaders).forEach(([key, value]) => {
       res.setHeader(key, value);
     });
-    return res.status(status || 500).json({
+
+    return res.status(status).json({
       error: error.message || 'Internal server error',
-      status: status
+      status: status,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
