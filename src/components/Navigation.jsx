@@ -202,88 +202,119 @@ export default function Navigation() {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Backdrop */}
       <div
-        className={`mobile-menu-overlay ${isMenuOpen ? 'open' : ''}`}
+        className={`mobile-menu-backdrop ${isMenuOpen ? 'open' : ''}`}
+        onClick={() => setIsMenuOpen(false)}
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(255, 255, 255, 0.98)',
+          background: 'rgba(0, 0, 0, 0.25)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          zIndex: 9998,
+          opacity: isMenuOpen ? 1 : 0,
+          pointerEvents: isMenuOpen ? 'all' : 'none',
+          transition: 'opacity 0.4s ease',
+        }}
+      />
+
+      {/* Mobile Menu Drawer */}
+      <div
+        className={`mobile-menu-drawer ${isMenuOpen ? 'open' : ''}`}
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '75%',
+          maxWidth: '320px',
+          background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           zIndex: 9999,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: isMenuOpen ? 1 : 0,
-          pointerEvents: isMenuOpen ? 'all' : 'none',
-          transition: 'all 0.3s ease-in-out',
-          transform: isMenuOpen ? 'scale(1)' : 'scale(0.95)',
+          padding: '24px 24px 40px',
+          boxShadow: '-10px 0 40px rgba(0,0,0,0.1)',
+          transform: isMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        <button
-          onClick={() => setIsMenuOpen(false)}
-          style={{
-            position: 'absolute',
-            top: '24px',
-            right: '24px',
-            background: 'rgba(0,0,0,0.05)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '48px',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'var(--color-gray-900)',
-          }}
-          aria-label="Close Menu"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '40px' }}>
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            style={{
+              background: 'rgba(0,0,0,0.04)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--color-gray-900)',
+              transition: 'background 0.2s',
+            }}
+            aria-label="Close Menu"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          overflowY: 'auto'
+        }}>
           {links.map((l, index) => (
             <Link
               key={l.path}
               to={l.path}
+              onClick={() => setIsMenuOpen(false)}
               style={{
                 textDecoration: 'none',
-                fontSize: '24px',
+                fontSize: '20px',
                 fontWeight: 600,
                 color: isActive(l.path) ? 'var(--color-primary)' : 'var(--color-gray-800)',
-                transform: isMenuOpen ? 'translateY(0)' : 'translateY(20px)',
-                opacity: isMenuOpen ? 1 : 0,
-                transition: `all 0.4s ease ${index * 0.05 + 0.1}s`,
+                fontFamily: 'var(--font-sans)',
+                borderBottom: '1px solid rgba(0,0,0,0.04)',
+                paddingBottom: '16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
               {l.label}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.4">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </Link>
           ))}
 
           <Link
             to="/generate"
+            onClick={() => setIsMenuOpen(false)}
             style={{
               marginTop: '16px',
               textDecoration: 'none',
-              padding: '16px 48px',
-              borderRadius: '999px',
+              padding: '16px',
+              borderRadius: '16px',
               background: 'var(--gradient-primary)',
               color: 'white',
-              fontSize: '20px',
-              fontWeight: 700,
-              boxShadow: '0 10px 30px rgba(0, 122, 255, 0.3)',
-              transform: isMenuOpen ? 'translateY(0)' : 'translateY(20px)',
-              opacity: isMenuOpen ? 1 : 0,
-              transition: `all 0.4s ease ${links.length * 0.05 + 0.1}s`,
+              fontSize: '18px',
+              fontWeight: 600,
+              textAlign: 'center',
+              boxShadow: '0 8px 20px rgba(0, 122, 255, 0.25)',
+              fontFamily: 'var(--font-sans)',
             }}
           >
             Get Started
