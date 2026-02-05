@@ -111,8 +111,6 @@ export default function Footer() {
         <div>© {new Date().getFullYear()} SermonDive. All rights reserved.</div>
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
           <span>Built for discipleship</span>
-          <span>•</span>
-          <span>DocShield-inspired UI</span>
         </div>
       </div>
     </footer>
