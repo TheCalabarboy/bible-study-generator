@@ -27,9 +27,9 @@ export default function Topics() {
     customRenderer.heading = (text, level) => {
       const base = 'font-weight: bold; margin: 16px 0 8px 0;';
       const styles = {
-        1: 'font-size: 28px; color: #667eea; margin: 24px 0 12px 0;',
-        2: 'font-size: 22px; color: #764ba2; margin: 20px 0 10px 0;',
-        3: 'font-size: 18px; color: #333; margin: 16px 0 8px 0;',
+        1: 'font-size: 28px; color: #667eea; margin: 24px 0 12px 0; word-break: break-word; overflow-wrap: break-word;',
+        2: 'font-size: 22px; color: #764ba2; margin: 20px 0 10px 0; word-break: break-word; overflow-wrap: break-word;',
+        3: 'font-size: 18px; color: #333; margin: 16px 0 8px 0; word-break: break-word; overflow-wrap: break-word;',
       };
       const style = styles[level] || base;
       return `<h${level} style="${style}">${text}</h${level}>`;

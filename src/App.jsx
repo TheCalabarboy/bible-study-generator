@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // import { useAuth } from './contexts/AuthContext'; // (unused while auth bypass is active)
 import { exportStudyToWord } from './utils/exportToWord';
 import { analyzeVideoForBiblicalContent, generateBibleStudy } from './services/geminiService';
@@ -55,41 +55,37 @@ function App() {
   const currentStudy = dailyStudies.length > 0 ? dailyStudies.find(s => s.day === activeDay) : null;
 
   // === Configure marked to produce clean, predictable HTML ===
-  // Build from the stock renderer so nested markdown remains intact.
-  const renderer = new marked.Renderer();
+  const renderer = useMemo(() => {
+    const r = new marked.Renderer();
 
-  renderer.heading = function heading(text, level) {
-    const styles = {
-      1: 'font-size: 28px; color: #667eea; margin: 24px 0 12px 0; font-weight: bold;',
-      2: 'font-size: 22px; color: #764ba2; margin: 20px 0 10px 0; font-weight: bold;',
-      3: 'font-size: 18px; color: #333; margin: 16px 0 8px 0; font-weight: bold;',
+    r.heading = (text, level) => {
+      const styles = {
+        1: 'font-size: 28px; color: #667eea; margin: 24px 0 12px 0; font-weight: bold; word-break: break-word; overflow-wrap: break-word;',
+        2: 'font-size: 22px; color: #764ba2; margin: 20px 0 10px 0; font-weight: bold; word-break: break-word; overflow-wrap: break-word;',
+        3: 'font-size: 18px; color: #333; margin: 16px 0 8px 0; font-weight: bold; word-break: break-word; overflow-wrap: break-word;',
+      };
+      const style = styles[level] || 'font-weight: bold; margin: 16px 0 8px 0;';
+      return `<h${level} style="${style}">${text}</h${level}>\n`;
     };
-    const style = styles[level] || 'font-weight: bold; margin: 16px 0 8px 0;';
-    return `<h${level} style="${style}">${text}</h${level}>\n`;
-  };
 
-  renderer.list = function list(body, ordered) {
-    const tag = ordered ? 'ol' : 'ul';
-    const style = 'margin-left: 20px; margin-bottom: 12px;';
-    return `<${tag} style="${style}">\n${body}</${tag}>\n`;
-  };
+    r.list = (body, ordered) => {
+      const tag = ordered ? 'ol' : 'ul';
+      return `<${tag} style="margin-left: 20px; margin-bottom: 12px;">\n${body}</${tag}>\n`;
+    };
 
-  renderer.listitem = function listitem(text) {
-    return `<li style="margin-bottom: 8px;">${text}</li>\n`;
-  };
+    r.listitem = (text) => `<li style="margin-bottom: 8px;">${text}</li>\n`;
 
-  renderer.strong = function strong(text) {
-    return `<strong style="font-weight:bold; color:#333;">${text}</strong>`;
-  };
+    r.strong = (text) => `<strong style="font-weight:bold; color:#333;">${text}</strong>`;
 
-  renderer.link = function link(href, title, text) {
-    const titleAttr = title ? ` title="${title}"` : '';
-    return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" style="color:#667eea; text-decoration:underline;">${text}</a>`;
-  };
+    r.link = (href, title, text) => {
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" style="color:#667eea; text-decoration:underline;">${text}</a>`;
+    };
 
-  renderer.paragraph = function paragraph(text) {
-    return `<p style="margin:12px 0; line-height:1.8; color:#333;">${text}</p>\n`;
-  };
+    r.paragraph = (text) => `<p style="margin:12px 0; line-height:1.8; color:#333;">${text}</p>\n`;
+
+    return r;
+  }, []);
 
   // Auth handlers
   const handleAuth = async (e) => {
@@ -346,17 +342,19 @@ function App() {
     },
   };
 
-  // Register the renderer and other options via marked.use()
-  marked.use({
-    renderer,
-    gfm: true,
-    breaks: false,
-    headerIds: false,
-    mangle: false
-  });
+  // Register the renderer once — no need to re-run on every render.
+  useEffect(() => {
+    marked.use({
+      renderer,
+      gfm: true,
+      breaks: false,
+      headerIds: false,
+      mangle: false
+    });
+  }, [renderer]);
 
   // Markdown → sanitized HTML
-  const renderStudyHTML = (markdown) => {
+  const renderStudyHTML = useCallback((markdown) => {
     const normalized = normalizeStudyMarkdown(markdown ?? '');
     const raw = marked.parse(normalized);
     const withLinks = linkScriptureReferences(raw);
@@ -366,7 +364,7 @@ function App() {
       ALLOW_DATA_ATTR: true
     });
     return clean;
-  };
+  }, []);
 
   const overlay = <LoadingOverlay isVisible={isGenerating} message="Please wait as the study is generated. If it returns an error, kindly try again as the generator can be overloaded sometimes" />;
   const studyContentRef = useRef(null);
@@ -872,6 +870,7 @@ function App() {
             border: '1px solid var(--color-gray-100)',
             maxHeight: '500px',
             overflowY: 'auto',
+            overflowX: 'hidden',
             marginBottom: 'var(--space-8)',
           }}
           ref={studyContentRef}>

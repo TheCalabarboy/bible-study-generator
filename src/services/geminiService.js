@@ -421,6 +421,12 @@ Create a complete 5-day Bible study that is:
 2. Exegetically sound and pastorally warm
 3. Specific to this teaching (not generic)
 
+FORMATTING RULES (strictly follow):
+- Use plain prose for all body text. Do NOT bold sentences or paragraphs.
+- Bold ONLY short key terms or scripture references (e.g. **grace**, **John 3:16**).
+- Never wrap an entire sentence or clause in ** **.
+- Use # and ## headings as specified below — no other markdown decoration.
+
 CONTEXT
 • TITLE: ${videoTitle}
 • THEMES: ${themes.join(', ')}
