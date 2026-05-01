@@ -10,6 +10,7 @@ import DOMPurify from 'dompurify';
 import { linkScriptureReferences } from './utils/linkScriptureReferences';
 import { normalizeStudyMarkdown } from './utils/normalizeStudyMarkdown';
 import LoadingOverlay from './components/LoadingOverlay';
+import { useApiKey } from './contexts/ApiKeyContext';
 import { Input, Select, Checkbox, Button, Card, Label, ErrorMessage, SuccessBanner } from './components/UIComponents';
 
 function App() {
@@ -23,6 +24,8 @@ function App() {
   const signup = async () => {};
   const logout = async () => {};
   // const { currentUser, login, signup, logout } = useAuth();
+
+  const { clearKey } = useApiKey();
 
   // Navigation and content states
   const [step, setStep] = useState('input');
@@ -243,7 +246,10 @@ function App() {
             return match ? Number(match[1]) : undefined;
           })());
 
-      if (status === 503 || message.toLowerCase().includes('overloaded')) {
+      if (error?.isApiKeyError) {
+        clearKey();
+        return;
+      } else if (status === 503 || message.toLowerCase().includes('overloaded')) {
         setValidationError('Our servers are pretty hot right now. Please wait a bit and try again.');
       } else if (status === 429 || message.toLowerCase().includes('rate limit')) {
         setValidationError('We are handling a lot of requests at the moment. Give it a moment and try again.');
@@ -650,6 +656,16 @@ function App() {
                   {validationError}
                 </ErrorMessage>
               )}
+
+              <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => clearKey()}
+                  style={{ fontSize: '13px', color: 'var(--color-gray-500)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Change API key
+                </button>
+              </div>
             </Card>
           </div>
         </div>
@@ -1037,6 +1053,18 @@ function App() {
               variant="primary"
             >
               🔄 New Study
+            </Button>
+
+            <Button
+              onClick={() => {
+                clearKey();
+                setYoutubeLink('');
+                setDailyStudies([]);
+                setActiveDay(1);
+              }}
+              variant="secondary"
+            >
+              🔑 Change API Key
             </Button>
 
             <Button

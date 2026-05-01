@@ -6,8 +6,10 @@ import { normalizeStudyMarkdown } from '../utils/normalizeStudyMarkdown';
 import { generateBibleStudy } from '../services/geminiService';
 import { exportStudyToWord } from '../utils/exportToWord';
 import LoadingOverlay from '../components/LoadingOverlay';
+import { useApiKey } from '../contexts/ApiKeyContext';
 
 export default function Topics() {
+  const { clearKey } = useApiKey();
   const [topic, setTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -384,6 +386,16 @@ export default function Topics() {
               )}
             </div>
           </form>
+
+          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+            <button
+              type="button"
+              onClick={() => clearKey()}
+              style={{ fontSize: '13px', color: 'var(--color-gray-500)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Change API key
+            </button>
+          </div>
 
           {error && (
             <div style={{ background: '#fee', color: '#b00020', padding: 12, borderRadius: 8, marginBottom: 16 }}>

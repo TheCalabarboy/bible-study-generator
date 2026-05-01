@@ -3,8 +3,6 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize with server-side environment variable (not VITE_ prefixed)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 // CORS headers for the response
@@ -31,14 +29,18 @@ export default async function handler(req, res) {
   try {
     const { action, payload } = req.body;
 
-    if (!process.env.GEMINI_API_KEY) {
-      console.error('Configuration Error: GEMINI_API_KEY is not set in environment variables.');
-      return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+    const requestApiKey = (req.body.apiKey || '').trim();
+    const effectiveKey = requestApiKey || process.env.GEMINI_API_KEY;
+
+    if (!effectiveKey) {
+      return res.status(500).json({ error: 'No API key provided. Please enter your Gemini API key.' });
     }
 
     if (!action || !payload) {
       return res.status(400).json({ error: 'Missing action or payload' });
     }
+
+    const genAI = new GoogleGenerativeAI(effectiveKey);
 
     const model = genAI.getGenerativeModel({
       model: MODEL_NAME,

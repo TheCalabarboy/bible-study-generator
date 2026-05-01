@@ -5,7 +5,7 @@ import HeroReading from '../assets/hero-reading.png';
 import Logo from '../assets/Logo.png';
 
 export default function HomePage() {
-  const introVideoId = import.meta.env.VITE_INTRO_VIDEO_ID || 'IwooZSKSDpg';
+  const introVideoId = import.meta.env.VITE_INTRO_VIDEO_ID || 'Ee2wOK3kGuA';
   const [isVisible, setIsVisible] = useState(false);
   const [videoKey, setVideoKey] = useState(0);
 
@@ -298,7 +298,7 @@ export default function HomePage() {
           videoId={introVideoId}
           storageKey="introVideoDismissed"
           headline="Welcome to SermonDive"
-          description="Here's a quick tour showing how to transform sermons into five-day Bible studies."
+          description="Learn how to use your own AI key to transform sermons into five-day Bible studies."
         />
       )}
 

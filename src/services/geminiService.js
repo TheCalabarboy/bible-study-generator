@@ -2,6 +2,16 @@
 // SECURE VERSION: Calls backend API instead of Gemini directly
 // API key is now kept server-side only
 
+/* ----------------------- Runtime Key (BYOK) ------------------------- */
+
+let _runtimeApiKey = null;
+let _runtimeProvider = 'gemini';
+
+export function setRuntimeApiKey(key, provider = 'gemini') {
+  _runtimeApiKey = key || null;
+  _runtimeProvider = provider || 'gemini';
+}
+
 /* ----------------------------- Utilities ----------------------------- */
 
 function safeLower(s) { return typeof s === 'string' ? s.toLowerCase() : s; }
@@ -180,7 +190,7 @@ async function callGeminiAPI(payload, maxAttempts = 3) {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generate', payload })
+        body: JSON.stringify({ action: 'generate', payload, apiKey: _runtimeApiKey || undefined })
       });
 
       const data = await response.json();
@@ -188,6 +198,9 @@ async function callGeminiAPI(payload, maxAttempts = 3) {
       if (!response.ok) {
         const error = new Error(data.error || 'API request failed');
         error.status = response.status;
+        if (response.status === 400 || response.status === 403) {
+          error.isApiKeyError = true;
+        }
         throw error;
       }
 
