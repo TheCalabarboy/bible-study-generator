@@ -5,6 +5,10 @@ export function normalizeStudyMarkdown(markdown = '') {
   output = output.replace(/([^\n])(\n)(#{1,6}\s+)/g, '$1\n\n$3');
   output = output.replace(/(#{1,6}\s+[^\n]+)(?!\n\n)/g, '$1\n');
 
+  // Strip bold from long spans (full sentences bolded by the AI).
+  // Keep bold only for short key terms / scripture refs (≤60 chars).
+  output = output.replace(/\*\*([^*]{61,}?)\*\*/g, '$1');
+
   // Ensure bold labels with colon are followed by a space
   output = output.replace(/(\*\*[^\n]+?:\*\*)(?!\s)/g, '$1 ');
 

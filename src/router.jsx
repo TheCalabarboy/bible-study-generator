@@ -21,6 +21,7 @@ import Quiz from './pages/Quiz';
 // Generator pages
 import Generate from './pages/Generate';
 import Topics from './pages/Topics';
+import RequireApiKey from './components/RequireApiKey';
 
 const NotFound = () => (
   <div style={{ padding: 40 }}>Page not found. <a href="/">Go Home</a></div>
@@ -33,9 +34,14 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
 
-      // generator routes
-      { path: 'generate', element: <Generate /> },
-      { path: 'topics', element: <Topics /> },
+      // generator routes — gated by API key
+      {
+        element: <RequireApiKey />,
+        children: [
+          { path: 'generate', element: <Generate /> },
+          { path: 'topics', element: <Topics /> },
+        ],
+      },
       { path: 'quiz', element: <Quiz /> },
 
       { path: 'about', element: <About /> },
